@@ -495,3 +495,268 @@ movie.names [movie.genre == "Comedy" & movie.boxoffice < 50.0]
 median(movie.boxoffice[movie.rating == "G" | movie.rating == "PG"])
 #What percent of movies were rated R OR were comedies?
 mean(movie.rating=="R" | movie.genre == "Comedy")
+
+####Chapter 8: Matrices and dataframes####
+#Create a dataframe of boat sale data called bsale
+bsale <- data.frame(name = c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j"),
+                    color = c("black", "green", "pink", "blue", "blue", "green",
+                              "green", "yellow", "black", "black"),
+                    age = c(143, 53, 356, 23, 647, 24, 532, 43, 66, 86),
+                    price = c(53, 87, 54, 66, 264, 32, 532, 58, 99, 132),
+                    cost = c(52, 80, 20, 100, 189, 12, 520, 68, 80, 100),
+                    stringsAsFactors = FALSE)
+#Explore bsale dataset
+#Show me the first few rows
+head(bsale)
+#Show me the structure of the data
+str(bsale)
+#Open the data in a new window
+View(bsale)
+#What are the names of the columns?
+names(bsale)
+#How many rows are in the data?
+nrow(bsale)
+#Calculating statistics from column vectors
+#What was the mean age?
+mean(bsale$age)
+#How many boats were there of each color?
+table(bsale$color)
+#What was the maximum price?
+max(bsale$price)
+#Adding new columns
+bsale$id <- 1:nrow(bsale)
+bsale$age.decades <- bsale$age / 10
+bsale$profit <- bsale$price - bsale$cost
+#What was the mean price of green boats
+with(bsale, mean(price[color == "green"]))
+#What were the names of the boats older than 100 years?
+with(bsale, name[age > 100])
+#What percent of black boats had a positive profit?
+with(subset(bsale, color == "black"), mean(profit > 0))
+#Save only the price and cost columns in a new dataframe
+bsale.2 <- bsale[c("price", "cost")]
+#Change the names of the columns to "p" and "c"
+names(bsale.2) <- c("p", "c")
+#Create a dataframe called old.black.bsale containing only data from black boats older than 50 years
+old.black.bsale <- subset(bsale, color == "black" & age >50)
+
+####Chapter 8.2: Creating matrices and dataframes####
+##Several common functions, which takes one or more vectors as inputs, and returns a matrix or dataframe
+#cbind(a, b, c)--Combine vectors as columns in a matrix
+cbind(1:5, 6:10, 11:15)
+#rbind(a, b, c)--Combine vectors as rows in a matrix
+rbind(1:5, 6:10, 11:15)
+#matrix(x, nrow, ncol, byrow)--Create a matrix from a vector x
+matrix(x = 1:12, nrow = 3, ncol = 4)
+#data.frame()--Create a dataframe from named columns
+data.frame("age" = c(19, 21), sex = c("m", "f"))
+
+#8.2.1-cbind(), rbind
+#Both create matrices by combining several vectors of the same length. 
+#Let's use these functions to create a matrix with the numbers 1-30
+#First create three vectors of length 5, then combine into one matrix
+x <- 1:5
+y <- 6:10
+z <- 11:15
+#Create a matrix where x, y, and z are columns
+cbind(x, y, z)
+#Create a matrix where x, y, and z are rows
+rbind(x, y, z)
+
+#8.2.2-matrix()
+#Matrices can either contain numbers or character vectors, but not both
+#Creating a matrix with numeric and character columns will make everything a character
+cbind(c(1, 2, 3, 4, 5),
+      c("a", "b", "c", "d", "e"))
+#The matrix() function creates a matix from a single vector of data
+#It has 4 main inputs
+#data-a vector of data
+#nrow-the number of rows you want in the matrix
+#ncol-the number of columns you want in a matrix
+#byrow-a logical value indicating whether you want to fill the matrix by rows. 
+
+#Create a matrix of the integers 1:10, with 5 rows and 2 columns
+matrix(data = 1:10, nrow = 5, ncol = 2)
+#Now with 2 rows and 5 columns
+matrix(data = 1:10, nrow = 2, ncol = 5)
+#Now with 2 rows and 5 columns, but fill by row instead of columns
+matrix(data = 1:10, nrow = 2, ncol = 5, byrow = TRUE)
+
+#8.2.3-dataframe()
+#To create a dataframe from vectors, use the data.frame function. It works similarly as cbind, 
+#but you specify names to each of the columns as you define them. 
+#Let's create a simple dataframe called survey with a mix of text and numeric columns.
+survey <- data.frame("index" = c(1, 2, 3, 4, 5), 
+                     "sex"= c("m", "m", "m", "f", "f"), 
+                     "age" = c(99, 46, 23, 54, 23))
+
+#8.2.3.1-stringasfactors = FALSE
+#data.frame() will automatically convert any string columns to a specific type of obect called a factor
+#a factor is a nominal variable that has a well specified possible set of values that it can take on
+#ex: you can create a factor "sex" that can only take values "male" and "female"
+#To tell R NOT to convert your string columns to factors, you need to include the argument stringasfactors=FALSE
+#Let's look at the classes of the columns in the dataframe "survey" using the str() function
+#Show me the structure of the survey dataframe
+str(survey)
+#R has converted the column sex to a factor with only two possible levels, which can cause problems
+#Let's create the dataframe again using the stringasfactors=FALSE argument
+survey <- data.frame("index" = c(1, 2, 3, 4, 5),
+                     "sex" = c("m", "m", "m", "f", "f"),
+                     "age" =c(99, 46, 23, 54, 23),
+                     stringsAsFactors = FALSE)
+str(survey)
+
+####Chapter 8.3: Matrix and dataframe functions####
+#R has lots of functions for viewing data frames and returning info
+#head(x), tail(x)--print the first or last few rows
+#View(x)--open entire object in a new window
+#nrow(x), ncol(x), dim(x)--count the number of rows and columns
+#rownames(), colnames(), names()--show the row or column names
+#str(x), summary(x)--show the structure of the dataframe (dimensions and classes) and summary stats
+
+#8.3.1-head(), tail(), View()
+#to see the first few rows of a dataframe, use head(), to see the last, use tail()
+head(ChickWeight)
+tail(ChickWeight)
+#View opens the entire dataframe in a new window
+View(ChickWeight)
+
+#8.3.2-summary(), str()
+#To get summary stats on all columns in a dataframe, use summary() function
+summary(ToothGrowth)
+#To learn about the classes of columns in a dataframe, use the str() function. 
+str(ToothGrowth)
+
+####Chapter 8.4: Dataframe column names####
+#In a df, each column will have a name, and you can use these names to access specific columns by name
+#To access, use function name(), which will return a string vector with the names of the df
+names(ToothGrowth)
+#To access a specific column, use the $ operator in the form df$name, which will return the column as a vector
+#Return the len column of ToothGrowth
+ToothGrowth$len
+#Because the $ operator returns a vector, you can easily calculate stats on columns
+#What is the mean of the len column of ToothGrowth
+mean(ToothGrowth$len)
+#Give me a table of the supp column of ToothGrowth
+table(ToothGrowth$supp)
+#If you want to access several columns by name, you can forgo the $ operator and put a character vector in brackets
+#Give me the len and supp columns of ToothGrowth
+head(ToothGrowth[c("len", "supp")])
+
+#8.4.1: Adding new columns
+#You can add new columns using $ and <-
+#Let's create a df called survey with two columns: index and age
+survey <- data.frame("index" =c(1, 2, 3, 4, 5), age = c(24, 25, 42, 56, 22))
+survey
+#Now let's add a column called sex with a vector of sex data
+survey$sex <- c("m", "m", "f", "f", "m")
+survey
+
+#8.4.2-Changing column names
+#To change the name of a column in a df, use a combo of names() function, indexing, and reassignment
+#Change name of first column of survey to "participant.number"
+names(survey)[1] <- "participant.number"
+survey
+#WARNING: Change column names with logical indexing to avoid errors
+#What if the column you want to change isn't the first column?
+#To avoid issues, it's better to change column names using a logical vector using format
+#names(df)[names(df) == "old.name] <- "new.name"
+#Use logical indexing to change the name of column survey$age to survey$years
+names(survey)[names(survey) == "age"] <- "years"
+survey
+
+####Chapter 8.5: Slicing dataframes####
+#Once you have a dataset stored, you'll want to access different parts based on criteria
+#Ex: if your dataset has the results of an experiment comparing different experimental groups,
+#you'll want stats for each group separately. This is called slicing
+
+#8.5.1-Slicing with [, ]
+#Just like vectors, you can access specific data using brackets
+#But now we can use two indexing vectors: one for rows, one for columns
+#Use notation data[rows, columns] where rows and columns are vectors of integers
+#Try indexing the ToothGrowth df, which has the results of a study testing effectiveness of different
+#types of supplements on the length of guinea pig's teeth
+#Give me the rows 1-6 and column 1 of TG
+ToothGrowth[1:6, 1]
+#You can index matrices and df with longer vectors to get more data
+#Give me rows 1-3 and columns 1 and 3 of TG
+ToothGrowth[1:3, c(1,3)]
+#If you want to look at an entire row OR colum, you can leave the corresponding index blank
+#Give me the first row and all columns of TG
+ToothGrowth[1, ]
+#Give me the second column and all rows of TG
+ToothGrowth[, 2]
+#To get analyses on subsets of data, we'll use subsetting, either indexing with logical vectors or using subset()
+
+#8.5.2-Slicing with logical vectors
+#First create a logical vector containing only T and F vales
+#Next, index a df using logical vector to return only values for which logical vector is T
+#Create a new df with only rows of TG where supp equals VC
+ToothGrowth.VC <- ToothGrowth[ToothGrowth$supp == "VC", ]
+#Just like with vectors, we can make logical vectors based on multiple criteria-then index based on those
+#Create a df with only the rows of TG where supp equals OJ and dose < 1
+ToothGrowth.OJ.a <- ToothGrowth[ToothGrowth$supp == "OJ" & ToothGrowth$dose < 1, ]
+
+#8.5.3-Slicing with subset()-more elegant
+#Main arguments with subset() function:
+#x--a df you want to subset
+#subset--a logical vector indicating the rows to keep
+#select--the columbs you want to keep
+#Get rows of TG when len < 20 AND supp == "OJ" AND dose >= 1
+subset(x = ToothGrowth,
+      subset = len < 20 &
+        supp == "OJ" &
+        dose >= 1)
+#If you just want certain columns, you can just name the columns in the select argument
+#Get rows of TG where len > 30 AND supp =="VC", but only return len and dose column
+subset(x = ToothGrowth,
+       subset = len > 30 & supp == "VC",
+       select = c(len, dose))
+
+####Chapter 8.6: Combining slicing with functions####
+#Now you can combine slicing and dicing with stat functions to get summary stats on groups of data
+#What is the mean tooth length of guinea pigs given OJ?
+#Step 1: Create a subsetted df called oj
+oj <- subset(x = ToothGrowth, subset = supp == "OJ")
+#Step 2: Calculate the mean of the len column from the new subsetted data set
+mean(oj$len)
+#Can also use logical indexing all in one step:
+mean(ToothGrowth$len[ToothGrowth$supp == "OJ"])
+
+#8.6.1-with()
+#Helps save time when using multiple columns from df
+#Allows to specify a df once at the beginning of a line
+#Let's create a df called "health" with some info
+health <- data.frame("age" =c(32, 24, 43, 19, 43),
+                     "height" =c(1.75, 1.65, 1.50, 1.92, 1.80),
+                     "weight"= c(70, 65, 62, 79, 85))
+#Let's say we want to add a column called bmi, where bmi=weight/height(squared)
+#Calculate bmi
+health$weight / health$height ^ 2
+#We had to retype the name of the df for each column. 
+#Using with(), we can make it easier by saying name of df once
+with(health, height / weight ^ 2)
+
+####Chapter 8 exercises####
+#Create the dataframe
+pirate.hero <- data.frame("Name" = c("Astrid", "Lea", "Sarina", "Remon", "Letizia", "Babice", 
+                                     "Jonas","Wendy", "Niveditha", "Gioia"),
+                          "Sex" = c("F", "F", "F", "M", "F", "F", "M", "F", "F", "F"),
+                          "Age" = c(30, 25, 25, 29, 22, 22, 35, 19, 32, 21),
+                          "Superhero"= c("Batman", "Superman", "Batman", "Spiderman", "Batman",
+                                         "Antman", "Batman", "Superman", "Maggott", "Superman"),
+                          "Tattoos" = c(11, 15, 12, 5, 65, 3, 9, 13, 900, 0))
+#What is the median age of the 10 pirates?
+median(pirate.hero$Age)
+#What was the mean age of the female and male pirates separately
+mean(pirate.hero$Age[pirate.hero$Sex =="F"])
+#What was the most number of tattoos owned by a male pirate
+max(pirate.hero$Tattoos[pirate.hero$Sex =="M"])
+#What percent of pirates under the age of 32 were female?
+with(subset(pirate.hero, Age < 32), mean(Sex == "F"))
+#What percent of female pirates are under the age of 32?
+with(subset(pirate.hero, Sex == "F"), mean(Age < 32))
+#Add a new column called tattoos.per.year which shows how many tattoos each pirate has for each year in their life
+pirate.hero$tattoos.per.year <- c(30, 25, 24, 29, 22, 22, 35, 19, 32, 21)
+#Which pirate had the most number of tattoos?
+with(pirate.hero, name[age > 100]) 
