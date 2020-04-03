@@ -757,6 +757,10 @@ with(subset(pirate.hero, Age < 32), mean(Sex == "F"))
 #What percent of female pirates are under the age of 32?
 with(subset(pirate.hero, Sex == "F"), mean(Age < 32))
 #Add a new column called tattoos.per.year which shows how many tattoos each pirate has for each year in their life
-pirate.hero$tattoos.per.year <- c(30, 25, 24, 29, 22, 22, 35, 19, 32, 21)
+pirate.hero$tattoos.per.year <- pirate.hero$Tattoos / pirate.hero$Age
 #Which pirate had the most number of tattoos?
-with(pirate.hero, name[age > 100]) 
+pirate.hero$Name[pirate.hero$tattoos.per.year == max(pirate.hero$tattoos.per.year)]
+#What are the names of the female pirates whose favorite superhero is Superman?
+pirate.hero$Name[pirate.hero$Sex =="F" & pirate.hero$Superhero == "Superman"]
+#What was the median number of tattoos of pirates over the age of 20 whose favorite superhero is Spiderman?
+median(pirate.hero$tattoos[pirate.hero$Age > 20 & pirate.hero$Superhero == "Spiderman"])
