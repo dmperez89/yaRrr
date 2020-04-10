@@ -764,3 +764,91 @@ pirate.hero$Name[pirate.hero$tattoos.per.year == max(pirate.hero$tattoos.per.yea
 pirate.hero$Name[pirate.hero$Sex =="F" & pirate.hero$Superhero == "Superman"]
 #What was the median number of tattoos of pirates over the age of 20 whose favorite superhero is Spiderman?
 median(pirate.hero$tattoos[pirate.hero$Age > 20 & pirate.hero$Superhero == "Spiderman"])
+
+####Chapter 9: Importing, saving, and managing data####
+
+#### Chapter 9.1: Workspace Management Functions
+#ls()-Displays all objects in the current workspace
+#rm(a, b)...-Removes the objects a, b... from your workspace
+#rm(list =ls())-Removes ALL objects in your workspace
+#getwd()-Returns the current working directory
+#setwd(file = "dir)-Changes the working directory to a specified file location
+#list.files()-Returns the names of all files in the working directory
+#write.table(x, file = "mydata.txt", sep)-Writes the object x to a text file called mydata.txt. Define how the columns will be separated with sep
+#save(a, b..., file = "myimage.RData")-Saves objects a, b, ...to myimage.RData
+#save.image(file = "myimage.RData")-Saves ALL objects in your workspace to myimage.RData
+#load(file = "myimage.RData")-Loads objects in the file myimage.RData
+#read.table(file = "mydata.txt", sep, header)-Reads a text file called mydata.txt, define how columns are separated with sep, and whether there is a header column. 
+
+####Chapter 9.2: The Working Directory####
+#To see your current working directory, use getwd()
+get(wd)
+#If you want to change your working directory, use setwd()
+setwd(dir = "C:/Users/Danielle.Perez/Documents/yaRrr")
+
+####Chapter 9.4: The workspace####
+
+#9.4.1: ls()
+#If you want to see all the objects defined in your current workspace, use ls() function
+ls()
+
+####Chapter 9.5: .RData files####
+#The best way to store objects from R is with .RDatafiles, which can store as many objects as you want in a single file
+
+#9.5.1: save()
+#To save objects into one file, use save() function
+#Create some objects that we'll save later
+study1.df <- data.frame(id = 1:5, sex =c("m", "m", "f", "f", "m"), score = c(51, 20, 67, 52, 42))
+score.by.sex <- aggregate(score ~ sex, FUN = mean, data = study1.df)
+study1.htest <- t.test(score ~ sex, data = study1.df)
+#Save two objects as a new .RData file in the data folder of my current working directory
+save(study1.df, score.by.sex, study1.htest, file ="C:/Users/Danielle.Perez/Documents/yaRrr/data/study1.RData")
+
+#9.5.2: save.image()
+#If you have many objects you want to save, use save.image() function.
+#Save my workspace to complete_image.RData in the data folder of my wd
+save.image(file = "C:/Users/Danielle.Perez/Documents/yaRrr/data/projectimage.RData")
+
+#9.5.3: load()
+#To load an .RData file, use load() function
+#Load objects in 1.RData into workspace
+load(file = "C:/Users/Danielle.Perez/Documents/yaRrr/data/study1.RData" )
+#Load objects in projectimage.RData into workspace
+load(file = "C:/Users/Danielle.Perez/Documents/yaRrr/data/projectimage.RData" )
+
+#9.5.4: rm()
+#To remove objects from workspace, use rm()
+#To remove all objects in workspace, enter argument list = ls()
+
+####Chapter 9.6: .txt files####
+#Sometimes you'll want to export data as a simple .txt file that other programs (Excel) can read
+#Do this using write.table() function
+
+#9.6.1: write.table()
+#Arguments for the write.table functon that will save an object (usually a data frame) as a .txt file
+#x-the object you want to write to a text file, usually a data frame
+#file-the document's file path relative to the working directory, unless specified otherwise
+#sep-a string indicating how the columns are separated. For comma separated files, use sep = ","
+#row.names-a logical value (TRUE or FALSE) indicating whether or not to save the rownames in the text file
+#Following code will save the pirates data frame as a tab delimited text file called pirates.txt in my wd
+write.table(x = pirates, file = "pirates.txt", sep = "\t")
+#If you want to save a file outside the wd, use entire directory name
+#Write pirates dataframe to different folder (example used desktop, but permission denied, probably because not admin)
+write.table (x = pirates, file = "C:/Users/Danielle.Perez/Documents/yaRrr/more data/pirates.txt", sep = "\t")
+
+#9.6.2: read.table()
+#If you have a .txt file you want to read into R, use read.table() function
+#file-document's file path relative to working directory unless otherwise specified
+#header-a logical value indicating whether the data has a header row-that is, whether the first row represents column names
+#sep-string indicating how columns are separated
+#strinAsFactors-logical value indicating whether or not to convert strings to factors
+
+#9.6.3: Reading files directly from a web URL
+#A feature of read.table is loading text files from web. Set file path to the document's URL
+#Read a text file from the web
+fromweb <- read.table(file = 'http://goo.gl/jTNf6P', sep = '\t', header = TRUE)
+#Print the result--not sure this actually works anymore...
+fromweb
+
+####Chapter 9 Exercises####
+#Open a new R project, call the directory MyRProject, then select a directory (this will be project's wd)
