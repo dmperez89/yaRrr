@@ -1020,22 +1020,18 @@ library(dplyr)
 caffeine <- read.table(file = 'https://raw.githubusercontent.com/ndphillips/ThePiratesGuideToR/master/data/caffeinestudy.txt', 
                        sep = '\t', header = TRUE)
 View(caffeine)
-
 #Calculate mean age for each gender
 aggregate(formula = age ~ gender, 
           FUN = mean, 
           data = caffeine) 
-
 #Calculate the mean age for each drink
 aggregate(formula = age ~ drink,
           FUN = mean,
           data = caffeine)
-
 #Calculate the mean age for each combined level of both gender and drink
 aggregate(formula = age ~ gender + drink, 
           FUN = mean, 
           data = caffeine) 
-
 #Calculate median score for each age
 aggregate(formula = score ~ age,
           FUN = median,
@@ -1046,8 +1042,6 @@ aggregate(formula = score ~ age,
           FUN = max,
           data = subset(caffeine, gender == "male")
           )
-
-
 #Create a dataframe showing, for each level of drink, the mean, median, maximum, and sd of scores
 caffeine.agg <- caffeine %>%  
   group_by(drink) %>%
@@ -1059,7 +1053,6 @@ caffeine.agg <- caffeine %>%
     n = n()
   )
 caffeine.agg
-
 #Only for females above age of 20, create a table showing, for each combined level of drink and cups, the mean, median, max
 #and sd of scores. Also include a column showing how many people were in each group.
 caffeine %>%
@@ -1072,3 +1065,323 @@ caffeine %>%
     score.sd = sd(score),
     N = n()
   )
+
+####Chapter 11: Plotting (I)
+#A basic scatterplot
+plot(x = 1:10, y = 1:10, xlab = "X Axis Label", ylab = "Y Axis Label", main = "Main Title")
+
+####Chapter 11.1: Colors####
+
+#11.1: Colors by name
+#Easiest way to specify a color is to enter its name as a string
+#col = "red" is R's default version of red, and R has lots of basic and fun colors
+colors()
+demo("colors")
+ 
+#11.1.2: gray()
+#level-lightness: level = 1 = totally white, level 0 = totally black
+#alpha-transparency: aplpha = 0 = totally transparent, alpha = 1 = not transparent at all
+
+#11.1.3: yarrr::transparent()
+#Transparent colors can be nicer to look and help when multiple points overlap
+#Base R doesn't make it easy to make transparent colors, but there's a function in yarrr package
+#Basic scatterplot with standard colors
+plot(x = pirates$height, y = pirates$weight, col = "blue", pc = 16, main = "col = 'blue'")
+#Now using transparent function
+plot(x = pirates$height, y = pirates$weight, col = yarrr::transparent("blue", trans.val = .9), pch = 16, 
+     main = "col = yarrr:transparent('blue', .9)")
+
+####Chapter 11.2: Plotting arguments####
+#Most plotting functions have lots of optional arguments, or parameters to customize a plot. 
+#To see them all:
+?par
+#Usually only need to specify a couple of things, and R will use a default value for the rest
+
+####Chapter 11.3: Scatterplot: plot()
+#plot function makes scatterplot from two vectos
+#Argument: x, y-vectors of equal length specifying the x and y values of the points
+#Argument: type-type of plot. "l"=lines, "p"=points, "b"=lines and points, "n"=no plotting
+#Argument: main, xlab, ylab-strings giving labels for the plot title, x, and y axes
+#Argument: xlim, ylim-limits to the axes. Ex: xlim = c(0, 100) will set min and max of x axis to 0 and 100
+#Argument: pch-an integer indicating type of plotting symbols or a string specifying symbols as text
+?points
+#Argument: col-main color of the plotting symbols. 
+#Argument: ces-numeric vector specifying symbol size (from 0 to Inf). Default size is 1. 
+plot(x = 1:10, y = 1:10, type = "p", main = "My First Plot", 
+     xlab = "This is the x-axis label", ylab = "This is the y-axis label", 
+     xlim = c(0, 11), ylim = c(0, 11), col = "blue", pch = 16, cex = 1)
+
+#11.3.1: Symbol types: pch
+#When using plot(), you can specify the type of symbol with pch argument one of two ways
+#If you use a string like "p", R will use that text as the plotting symbol
+#If you use an integer value, you'll get the symbol that corresponds to that number
+
+####11.4: Histogram: hist()
+#Argument:x-vector of values
+#Argument: breaks-how should the bin sizes be calculated? Can be specified many ways, see ?hist for details
+#Argument: freq-should frequencies or probabilities be plotted? freq=TRUE shows frequencies, freq=FALSE shows probabilities
+#Argument: col, border-colors of the bin filling 
+#Create a histogram of the weights in the ChickWeight dataset
+hist(x = ChickWeight$weight, main = "Chicken Weights", xlab = "Weight", xlim = c(0, 500))
+#Can get fancier by adding additional arguments
+hist(x = ChickWeight$weight, main = "Fancy Chicken Weights Histogram", xlab = "Weight", ylab = "Frequency", 
+     breaks = 20, xlim = c(0, 500), col = "papayawhip", border = "hotpink")
+#If you want to plot two histograms on the same plot to show the distributions of two different groups, you can use
+#the argument to the second plot:
+hist(x = ChickWeight$weight[ChickWeight$Diet == 1], main = "Two Histograms in One", xlab = "Weight", ylab = "Frequency", 
+     breaks = 20, xlim = c(0, 500), col = gray(0, .5))
+hist(x = ChickWeight$weight[ChickWeight$Diet == 2], breaks = 30, add = TRUE, col = gray(1, .8))
+
+####Chapter 11.5: Barplot: barplot()####
+#Barplot usually shows summary statistics of different groups.
+#Primary argument is height:a vector of numeric values which will generate height of each bar
+#To add names, use names.arg argument
+#For additional arguments, look at help menu with ?barplot
+barplot(height = 1:5, names.arg = c("G1", "G2", "G3", "G4", "G5"), 
+        main = "Example Barplot", xlab = "Group", ylab = "Height")
+#Calculate mean chick weights for each time period
+diet.weights <- aggregate(weight ~ Time, data = ChickWeight, FUN = mean)
+#Create barplot
+barplot(height = diet.weights$weight, names.arg = diet.weights$Time,
+        xlab = "Week", ylab = "Average Weight", main = "Average Chicken Weights by Time", col = "mistyrose")
+
+#11.5.1: Clustered barplot
+#If you want different bars for different groups of data, you can enter a matrix as the argument to "height"
+#R will then plot each column as a separate set of bars
+#Let's say there was an expreriment where we compared how fast pirates swim under four conditions: wearing clothes
+#vs. being naked, and while being chased by a shark vs. not being chased by a shark:
+#No shark, naked = 2.1; no shark, clothed = 1.5; shark, naked = 3.0; shark, clothed = 3.0
+swim.data <- cbind(c(2.1, 3), c(1.5, 3))
+colnames(swim.data) <- c("Naked", "Clothed")
+rownames(swim.data) <- c("No Shark", "Shark")
+swim.data
+#Now, when we enter this matrix as the height = swim.data argument to barplot(), we'll get multiple bars
+barplot(height = swim.data, beside = TRUE, legend.text = TRUE, 
+        col = c(transparent("green", .2), transparent("red", .2)),
+        main = "Swimming Speed Experiment", ylab = "Speed (in m/s)", xlab = "Clothing Condition", ylim = c(0,4))
+
+####Chapter 11.6: pirateplot()
+#Easily shows raw data, descriptive statistics, and inferential statistics in one plot
+#Argument: formula-formula specifying a y-axis variable as a function of 1, 2, or 3 x-axis variable
+#For example, formula = weight ~ Diet + Time will plot weight as a function of Diet and Time
+#Argument: data-a dataframe containing the variables specified in formula
+#Argument: theme-plotting theme can be an integer from 1-4. Setting theme = 0 will turn off all elements
+#Argument: pal-the color palette. 
+#Argument: cap.beans-if cap.beans = TRUE, beans will be cut off at the mx and min data values
+#Create a pirateplot of the ChickWeight data. Set the DV to weight, IV to time using argument formula = weight ~ Time
+yarrr::pirateplot(formula = weight ~ Time, data = ChickWeight, main = "Pirateplot of chicken weights",
+                  xlab = "Diet", ylab = "Weight")
+
+#11.6.1: Pirateplot themes
+#Many different pirateplot themes which dictate the overall look of the plot. To specify, use theme = x where x is theme #
+#Ex: a pirateplot of height data using theme = 3, plotting pirate heights as a function of sex and whether or not they wear
+# a headband. Plot will be grayscale  by using pal= gray argument
+yarrr::pirateplot(formula = height ~ sex + headband, data = pirates, theme = 3, main = "Pirate Heights", pal = "gray")
+
+#11.6.2: Customizing pirateplots
+#Basically there are a ton, refer back to this section to see them
+
+#11.6.3: Saving output
+#If you include plot = FALSE argument, function will return some values associated with each bean in the plot
+pirateplot(formula = tattoos ~ sex + headband, data = pirates)
+#Save data from the pirateplot to an object
+tattoos.pp <- pirateplot(formula = tattoos ~ sex + headband, data = pirates, plot = FALSE)
+#Now I from access the summary and inferential stats from the plot in the tattoos.pp object
+#Most interesting element is $summary, which shows summary stats from each group
+#Show me stats from groups in the pirateplot
+tattoos.pp
+
+####Chapter 11.7: Low-level plotting functions####
+#These allow you to add elements like points or lines to an existing plot. Common ones:
+#points(x, y)-add points
+#abline(), segments()-adds lines or segments
+#arrows()-adds arrows
+#curve()-adds a curve representing a function
+#rect(), polygon()-adds a rectangle or arbitrary shape
+#text(), mtext()-adds text within the plot, or to plot margins
+#legend()-adds a legend
+#axis()-adds an axis
+
+#11.7.1:Starting with a blank plot
+#Might be useful to start by executing plot() function, but use type = n to keep it blank. Then we can add things
+plot(x = 1, xlab = "X Label", ylab = "Y label", xlim = c(0, 100), ylim = c(0, 100), main = "Blank Plotting Canvas", type = "n")
+
+#11.7.2: points()
+#Let's use points() to create a plot with different symbol types for diferent data. We'll use the pirates dataset and 
+#plot the relationship between age and number of tattoos. We'll create separate points for male and female pirates
+#Create blank plot:
+plot(x = 1, type = "n", xlim = c(100, 225), ylim = c(30, 110), pch = 16, 
+     xlab = "Height", ylab = "Weight", main = "Adding points to a plot with points()")
+#Add coral2 points for male data
+points(x = pirates$height[pirates$sex == "male"], 
+       y = pirates$weight[pirates$sex == "male"],
+       pch = 16, col = transparent("coral2", trans.val = .8))
+#Add steel blue points for female data
+points(x = pirates$height[pirates$sex == "female"],
+       y = pirates$weight[pirates$sex == "female"],
+       pch = 16, col = transparent("steelblue3", trans.val = .8))
+
+#11.7.3: abline(), segments(), grid()
+#Argument: h, v-locations of horizontal and vertical lines (for abline only)
+#Argument: x0, y0, x1, y1-starting and ending coordinates of lines (for segments only)
+#Argument: lty-line type. 1 = solid, 2 = dashed, 3 = dotted
+#Argument: lwd-width of the lines specified by a number. 1 is the default; .2 is very thin, 5 is very thick
+#Argument: col-line color
+#To add straight lines, us abline (across entire plot) or segments (has defined start and end points)
+#Can add reference lines to a plot with abline. 
+#We'll ass vertical and horizontal reference lines showing means of the variable on axes 
+plot(x = pirates$weight, y = pirates$height, xlab = "weight", ylab = "height", 
+     main = "Adding reference lines with abline", pch = 16, col = gray(.5, .2))
+#Add horizontal line at mean height
+abline(h = mean(pirates$height), lty = 2)
+#Add vertical line at mean weight
+abline(v = mean(pirates$weight), lty = 2)
+#You can also add regression line/line of best fit to a scatterplot by entering a regression object created with lm
+plot(x = pirates$height, y = pirates$weight, pch = 16, col = transparent("purple", .7),
+     main = "Adding a regression line to a scatterplot()")
+#Add the regression line
+abline(lm(weight~ height, data = pirates), lty = 2)
+#Segments function works similarly, but you specify beginning and end points
+#Before and after data
+before <- c(2.1, 3.5, 1.8, 4.2, 2.4, 3.9, 2.1, 4.4)
+after <- c(7.5, 5.1, 6.9, 3.6, 7.5, 5.2, 6.1, 7.3)
+#Create plotting space and before scores
+plot(x = rep(1, length(before)), y = before, xlim = c(.5, 2.5), ylim = c(0, 11), 
+      ylab = "Score", xlab = "Time", main = "Using segments() to connect points", xact = "n")
+#Add after scores
+points(x = rep(2, length(after)), y = after)
+#Add connection with segments()
+segments(x0 = rep(1, length(before)),
+         y0 = before,
+         x1 = rep(2, length(after)),
+         y1 = after, 
+         col = gray(0, .5))
+#Add labels
+mtext(text = c("Before", "After"),
+      side = 1, at = c(1, 2), line = 1)
+#The grid() function allows you to easily add grid lines to a plot
+plot(pirates$age, pirates$beard.length, pch = 16, col = gray(.1, .2), main = "Add grid lines to a plot with grid()")
+grid()
+
+#11.7.4: text()
+#Argument: x, y-coordinates of the labels
+#Argument: labels-labels to be plotted
+#Argument: cex-size of the labels
+#Argument: adj-horizontal text adjustment. adj = 0 is left justified, adj = .5 is cetnered, and adj = 1 is right justified
+#Argument: pos-position of the labels relative to the coordinates. pos = 1 puts label below coordinates
+  #2, 3, and 4 put it to the left, top, and right of the coordinates, respectively
+#Using text()ou can highlight points of interest or add information
+plot(1, xlim = c(0, 10), ylim = c(0, 10), type = "n")
+text(x = c(1, 5, 9), y = c(9, 5, 1), labels = c("Put", "text", "here"))     
+#Create a scatterplot of data and add labels above each point by including pos = 3 argument
+#Create data vectors
+height <- c(156, 175, 160, 172, 159, 165, 178)
+weight <- c(65, 74, 69, 72, 66, 75, 75)
+id <- c("andrew", "aeidi", "becki", "madisen", "david", "vincent", "jack")
+#Plot data
+plot(x = height, y = weight, xlim = c(155, 180), ylim = c(65, 80), pch = 16, col = yarrr::piratepal("xmen"))
+#Add id labels
+text(x = height, y = weight, labels = id, pos = 3)
+#If you are adding a long text string (like a sentence), may want to separate the text into separate lines
+#To do this, add text \n where you want new lines to start
+plot(1, type = "n", main = "The \\n tag", xlab = "", ylab = "")
+#Text withoutbreaks
+text(x = 1, y = 1.3, labels = "Text without \\n", font = 2)
+text(x = 1, y = 1.2, labels = "Haikus are easy. But sometimes they don't make sense. Refrigerator", font = 3)
+abline(h = 1, lty = 2)
+#Text with breaks
+text(x = 1, y = .92, labels = "Text with \\n", font = 2)
+text(x = 1, y = .7, labels = "Haikus are easy\nBut sometimes they don't make sense\nRefrigerator", font = 3)
+
+#11.7.5: Combinin text and numbers with paste()
+#Helpful anytime you want to combine multiple strings, or text and strings together
+#For example, you want to write text in a plot that says "the mean of these data are xxx"
+#Create a plot
+plot(x = ChickWeight$Time, y = ChickWeight$weight, 
+     col = gray(.3, .5), pch = 16, main = "Combining text with numeric scalers using paste()")
+#Add reference line
+abline(h = mean(ChickWeight$weight), lty = 2)
+#Add text
+text(x = 3, y = mean(ChickWeight$weight), labels = paste("Mean weight = ", round(mean(ChickWeight$weight), 2)), pos = 3)
+
+#11.7.6: curve()
+#Allows you to add a line showing a specific function or equation to a plot
+#Plot function x^2 from -10 to +10
+curve(expr = x^2, from = -10, to = 10, lwd = 2)
+#If you want to add custom function, you can define it and then use its name as the argume to expr
+#Plot the normal distribtion with mean = 22 and sd = 3
+#Create a function
+my.fun <- function(x) {dnorm(x, mean = 2, sd = 3)}
+curve(expr = my.fun, from = -10, to = 10, lwd = 2)
+
+#11.7.7: legend()
+#Add legend to the bottom right of a plot
+legend("bottomright", legend = c("Females", "Males"), col = c("blue", "orange"), pch = c(16, 16))
+#Create a plot with data from females
+plot(x = pirates$age[pirates$sex == "female"],
+     y = pirates$tattoos[pirates$sex == "female"],
+     xlim = c(0, 50), ylim = c(0, 20), pch = 16, col = yarrr::transparent("red", .7),
+     xlab = "Age", ylab = "Tattoos", main = "Add a legend with legend()")
+#Add data from males
+points(x = pirates$age[pirates$sex == "male"],
+       y = pirates$tattoos[pirates$sex == "male"],
+       pch = 16, col = yarrr::transparent("blue", .7))
+#Add legend
+legend("bottomright", legend = c("Females", "Males"), 
+       col = transparent(c('red', 'blue'), .5), pch = c(16, 16), bg = "white")
+
+####Chapter 11.8: Saving plots to a file with pdf(), jpeg(), and png()####
+#Three steps in creating a pdf
+#Step 1: call the pdf command to start the plot
+pdf(file = "C:/Users/Danielle.Perez/Documents/yaRrr/My Plot.pdf", width = 4, height = 4)
+#Step 2: Create the plot with R code
+plot(x = 1:10, y = 1:10)
+abline(v = 0)
+text(x = 0, y = 1, labels = "Random text")
+#Step 3: Run dev.off() to create the file
+dev.off()
+#Functions for others work the same way
+
+####Chapter 11.9: Examples####
+#Turn a boring scatterplot into a baloonplot
+#Create some random correlated data
+x <- rnorm(50, mean = 50, sd = 50)
+y <- x + rnorm(50, mean = 20, sd = 8)
+#Set up plotting space
+plot(1, bty = "n", xlim = c(0, 100), ylim = c(0, 100), type = "n", xlab = "", ylab = "", 
+     main = "Turning a scatterplot into a balloon plot!")
+#Add gridlines
+grid()
+#Add strings with segmentsy
+segments(x0 = x +rnorm(length(x), mean = 0, sd = .5), 
+         y0 = y -10, x1 = x, y1 = y, col = gray(.1, .95), lwd = .5)
+#Add balloons
+points(x, y, cex = 2, pch = 21, col = "white", bg = yarrr::piratepal("basel"))
+
+#You can use colors and point sizes to represent third variables. Plot the relationship between pirate height and weight
+#But make the size and color of each point reflect how many tattoos the pirate has
+#Just the first 100 pirates
+pirates.r <- pirates[1:100,]
+plot(x = pirates.r$height, y = pirates.r$weight, xlab = "height", ylab = "weight", 
+     main = "Specifying point sizes and colors with a third variable",
+     cex = pirates.r$tattoos / 8,
+     col = gray(1-pirates.r$tattoos /20))
+grid()
+
+####Chapter 11 Exercises####
+#Beardlengths dataframe has data on the lengths of bears from 3 different pirate ships.
+#Calculate average beard length for each ship using aggregate(), then recreate the barplot
+library("yarrr")
+View(BeardLengths)
+avg.lengths <- aggregate(Beard ~ Ship, data = BeardLengths, FUN = mean)
+barplot(avg.lengths$Beard, names.arg = avg.lengths$Ship, 
+        ylab = "Beard Length",
+        xlab = "Ship",
+        main = "Barplot of mean beard lengths by Ship",
+        ylim = c(0, 25))
+#Now using BeardLengths data frame, recreate pirateplot
+pirateplot(formula = Beard ~ Ship, data = BeardLengths, main = "Pirateplot of beard lengths by ship")
+#Using pirates dataset, recreate scatterplot showing relationship between a pirate's age and how many parrots they own
+plot(x = pirates$age, y = pirates$parrots, pch = 16, col = gray(level = .5, alpha = .1),
+     xlab = "Age", ylab = "Parrots", main = "Pirate age and number of parrots owned")
+
