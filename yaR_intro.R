@@ -1385,3 +1385,183 @@ pirateplot(formula = Beard ~ Ship, data = BeardLengths, main = "Pirateplot of be
 plot(x = pirates$age, y = pirates$parrots, pch = 16, col = gray(level = .5, alpha = .1),
      xlab = "Age", ylab = "Parrots", main = "Pirate age and number of parrots owned")
 
+####Chapter 12: Plotting (II)####
+
+####Chapter 12.1: More colors####
+
+#12.1.1: Piratepal()
+#yarrr package come with several color palettes contained in piratepal() function. To see them all:
+yarrr::piratepal("all")
+#To see a palette in detail, include the name of the palette in the first argument and then specify plot.result = TRUE
+#Show me basel palette
+yarrr::piratepal("info2", plot.result = TRUE, trans = .1)
+#Once you find a palette you like, you can save colors as a vector and assign the result to an object.
+#Save the brave palette to a vector
+brave.cols <- piratepal(palette = "brave", trans = .2)
+#Create a barplot with the brave colors
+barplot(height = 1:5, col = brave.cols, border = "white", main = "Barplot with the Brave palette")
+
+#12.1.2: RColorBrewer
+#Package that is great for getting or creating palettes
+library("RColorBrewer")
+display.brewer.all()
+
+#12.1.3: colorRamp2
+#good way to generate colors that represent numerical data is colorRamp2 function in circlize package
+#For example: you want to plot data showing relationship between # of drinks/week and resulting adverse effects
+#You want to color the points as a function of the # of packs of cigarettes/week a person smokes
+#0 packs = blue, 10 packs = orange, 30 packs = red
+#You want the alues in between break points of 0, 10, and 30 to be a mix of colors (value of 5 would be mix of orange and blue)
+#When you run the function, it will return another function that you can then use to generate colors
+#Once you storethe resulting function as an object, you can apply it on numerical data to get correct color for each point
+#Let's create color ramp function for smoking data points
+#Create a function which takes a number as an argument and returns corresponding color
+#Create color function from colorRamp2
+smoking.colors <- circlize::colorRamp2(breaks = c(0, 15, 25), 
+                                       colors = c("blue", "green", "red"), transparency = .2)
+plot(1, xlim = c(-.5, 31.5), ylim = c(0, .3), 
+     type = "n", xlab = "Cigarette Packs", 
+     yaxt = "n", ylab = "", bty = "n",
+     main = "colorRamp2 Example")
+segments(x0 = c(0, 15, 30), y0 = rep(0, 3), x1 = c(0, 15, 30), y1 = rep(.1, 3), lty = 2)
+points(x = 0:30, y = rep(.1, 31), pch = 16, col = smoking.colors(0:30))
+text(x = c(0, 15, 30), y = rep(.2, 3), labels = c("Blue", "Green", "Red"))
+#Create Data
+drinks <- round(rnorm(100, mean = 10, sd = 4), 2) 
+smokes <- drinks + rnorm(100, mean = 5, sd = 2)
+risk <- 1/ (1+exp(-(drinks + smokes) / 20 +rnorm(100, mean = 0, sd = 1)))
+#Create color function from colorRamp
+smoking.colors <- circlize::colorRamp2(breaks = c(0, 15, 30), colors = c("blue", "green", "red"), transparency = .3)
+#Bottom plot
+par(mar = c(4, 4, 5, 1))
+plot(x = drinks, y = risk, 
+     col = smoking.colors(smokes), 
+     pch = 16, cex = 1.2, main = "Plot of (Made-up Data)", 
+     xlab ="Drinks", ylab = "Risk")
+mtext(text = "Point color indicates smoking rate", line = .5, side = 3)
+
+#12.4.1: Getting colors with a kuler
+#Tool that allows you to determine exact RGB values for a color on a screen
+#Say you want to use the exact colors in the google logo-you need an app that picks colors off a screen 
+#Using rgb() function, you can convert RGB values to colors
+#Store the colors of google as a vector
+google.col <- c(
+  rgb(19, 72, 206, maxColorValue = 255), #Google blue
+  rgb(206, 45, 35, maxColorValue = 255), #Google red
+  rgb(253, 172, 10, maxColorValue = 255), #Google yellow
+  rgb(18, 140, 70, maxColorValue = 255)) #Google green
+#Print result
+google.col
+#Vector google.col now contains these values, which are string values that represents colors in a way R understands
+#Now I can use these colors in a plot by specifying col = google.col
+plot(1, xlim = c(0, 7), ylim = c(0, 1), type = "n", main = "Using stolen colors from a webpage")
+points(x = 1:6, y = rep(.4, 6), pch = 16, col = google.col[c(1, 2, 3, 1, 4, 2)], cex = 4)
+text(x = 1:6, y = rep(.7, 6), labels = c("G", "O", "O", "G", "L", "E"), 
+     col = google.col[c(1, 2, 3, 1, 4, 2)], cex = 3)
+
+####Chapter 12.2: Plot margins####
+#All plots in R have margins surrounding them that separate the main plotting space from the other areas
+#You can adjust margin size by specifying margin parameter, but you must do so before creating the plot
+#Let's create two plots with different margins. 
+#First plot with small margins
+par(mar = c(2, 2, 2, 2)) #Set margins on all sides to 2
+plot(1:10)
+mtext("Small Margins", side = 3, line = 1, cex = 1.2)
+mtext("par(mar = c(2, 2, 2, 2))", side = 3)
+#Second plot with large margins
+par(mar = c(5, 5, 5, 5)) #Set margins on all sides to 6
+plot(1:10)
+mtext("Large Margins", side = 3, line = 1, cex = 1.2)
+mtext("par(mar = c(5, 5, 5, 5))", side = 3)
+#Can also use mai instead of mar, which sets the margins in inches
+
+####Chapter 12.3: Arranging plots with par(mfrow) and layout()####
+#R makes it easy to arrange multiple plots in same plotting space
+#mfrow and mfcol parameters allow you to createa matrix of plots in same space
+#Both parameters take a vector of length two as an argument, corresponding to the number of rows and columns
+#Following code sets up 3x3 plotting matrix
+par(mfrow = c(2, 2)) #Create a 2 x 2 plotting matrix
+#Next 4 plots will be plotted next to each other
+#Plot 1
+hist(rnorm(100))
+#Plot 2
+plot(pirates$weight, pirates$height, pch = 16, col = gray(.3, 01))
+#Plot 3
+pirateplot(weight ~ Diet, data = ChickWeight, pal = "info", theme = 3)
+#Plot 4
+boxplot(weight ~ Diet, data = ChickWeight)
+#Only difference is par(mfrow) puts sequential plots in plotting matrix by row, par(mfcol) will fill them by column
+#When finished using a plotting matrix, rest the plotting parameter back to default state
+par(mfrow = c(1, 1))
+
+#12.3.1: Complex plot layouts with layout()
+#In order to arrange plots in different sized plotting spaces, need to use the layout() function
+#Not a plotting parameter, but a function all on its 
+#Let's say you want to place histograms next to a scatterplot
+#Begin by creating the layout matrix
+layout.matrix <-matrix(c(0, 2, 3, 1), nrow = 2, ncol = 2)
+layout.matrix
+#You can see we've told R to put the first plot in the bottom right, the second plot on the bottom left, third plot in top
+#right. Because we put a 0 in the first element, R knows that we don't plan to put anything in the top left. 
+#Because our layout matrix has 2 rows and 2 columns, need to set the widths and heights of the 2 columns
+#Do this using a numeric vector of length 2. Set the heights of the two rows to 1 and 2 and widths of columns to 1 and 2
+layout.matrix <- matrix(c(2, 1, 0, 3), nrow = 2, ncol = 2)
+layout(mat = layout.matrix, heights = c(1, 2), #Heights of the two rows
+       widths = c(2, 2)) #Widths of the two columns
+layout.show(3)
+#Now we're ready to put the plots together
+#Set plot layout
+layout(mat = matrix(c(2, 1, 0, 3), nrow = 2, ncol = 2),
+       heights = c(1, 2), #Heights of the 2 columns
+       widths = c(2, 1)) #Widths of the two columns
+#Plot 1: Scatterplot
+par(mar = c(5, 4, 0, 0))
+plot(x = pirates$height, y = pirates$weight, 
+     xlab = "height", ylab = "weight",
+     pch = 16, col = yarrr::piratepal("pony", trans = .7))
+#Plot 2: Top (height) boxplot
+par(mar = c(0, 4, 0, 0))
+boxplot(pirates$height, xaxt = "n", yaxt = "n", bty = "n", yaxt = "n", col = "white", frame = FALSE, horizontal = TRUE)
+#Plot 3: Right(weight) boxplot
+par(mar = c(5, 0, 0, 0))
+boxplot(pirates$weight, xaxt = "n", yaxt = "n", bty = "n", yaxt = "n", col = "white", frame = F)
+
+####Chapter 12.4: Additional plotting parameters####
+#To change background color of a plot, add command par(bg = col) prior to creating the plot.
+#Following will put light gray background behind a histogram
+par(bg = gray(.9))
+hist(x = rnorm(100), col = "skyblue")
+#More complex example
+parrot.data <- data.frame(
+  "ship" = c("Drunken\nMonkeys", "Slippery\nSnails", "Don't Ask\nDon'tTell", "The Beliebers"),
+  "Green" = c(200, 150, 100, 175), 
+  "Blue" = c(150, 125, 180, 242))
+#Set background color and plot margins
+par(bg = rgb(61, 55, 72, maxColorValue = 255), mar = c(6, 6, 4, 3))
+plot(1, xlab = "", ylab = "", xaxt = "n", yaxt = "n", main = "", bty = "n", type = "n", ylim = c(0,250), xlim = c(.25, 5.25))
+#Add gridlines
+abline(h = seq(0, 250, 50), lty = 3, col = gray(.95), lwd = 1)
+#yaxis labels
+mtext(text = seq(50, 250, 50), side = 2, at = seq(50, 250, 50), las = 1, line = 1, col = gray(.95))
+#ship labels
+mtext(text = parrot.data$ship, side = 1, at = 1:4, las = 1, line = 1, col = gray(.95))
+#Blue bars
+rect(xleft = 1:4 - .35 - .04 / 2,
+     ybottom = rep(0, 4), 
+     xright = 1:4 -.04 / 2,
+     ytop = parrot.data$Blue, col = "lightskyblue1", border = NA)
+#Green bars
+rect(xleft = 1:4 + .04 / 2,
+     ybottom = rep(0, 4), 
+     xright = 1:4 +.35 + .04 / 2,
+     ytop = parrot.data$Green,
+     col = "lightgreen", border = NA)
+legend(4.5, 250, c("Blue", "Green"),
+       col = c("lightskyblue1", "lightgreen"), pch = rep(15, 2), 
+       bty = "n", pt.cex = 1.5, text.col = "white")
+#Additional margin text
+mtext("Number of Green and Blue Parrots on 4 ships",
+      side = 3, cex = 1.5, col = "white")
+mtext("Parrots", side = 2, col = "White", line = 3.5)
+mtext("Source: Drunken survey on 22 May 2015", side = 1, 
+      at = 0, adj = 0, line = 3, font = 3, col = "white")
