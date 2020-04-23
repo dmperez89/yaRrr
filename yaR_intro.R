@@ -1565,3 +1565,342 @@ mtext("Number of Green and Blue Parrots on 4 ships",
 mtext("Parrots", side = 2, col = "White", line = 3.5)
 mtext("Source: Drunken survey on 22 May 2015", side = 1, 
       at = 0, adj = 0, line = 3, font = 3, col = "white")
+
+####Chapter 13: Hypothesis tests####
+#We'll cover 1 and 2 sample null hypothesis tests: like the t-test, correlation test,
+#and chi-squared test.
+#load library to get pirates data
+library(yarrr)
+#1 sample test
+#Are pirates ages different than 30 on average?
+t.test(x = pirates$age, mu = 30)
+#2 sample t-test
+#Do females and males have different numbers of tattoos?
+sex.ttest <- t.test(formula = tattoos ~ sex, data = pirates, 
+                    subset = sex %in% c("male", "female"))
+#Print result
+sex.ttest
+#Acess specific values from test
+sex.ttest$statistic
+sex.ttest$p.value
+sex.ttest$conf.int
+#Correlation test
+#Is there a relationship between age and height?
+cor.test(formula = ~age + height, data = pirates)
+#Chi-square test
+#Is there a relationship between college and favorite pirate?
+chisq.test(x = pirates$college, y = pirates$favorite.pirate)
+
+####Chapter 13.1: A short into to hypothesis tests
+#Conducted a survey and asked 10 American and 10 European pirates how many body 
+#piercings they had. 
+#Body piercing data
+american.bp <- c(3, 5, 2, 1, 4, 4, 6, 3, 5, 4)
+european.bp <- c(6, 5, 7, 7, 6, 3, 4, 6, 5, 4)
+#Store data in a dataframe
+bp.survey <- data.frame("bp" = c(american.bp, european.bp), 
+                        "group" = rep(c("American", "European"), each = 10),
+                        stringsAsFactors = FALSE)
+yarrr::pirateplot(bp ~ group, data = bp.survey,
+                  main = "Body Piercing Survey", 
+                  ylab = "Number of Body Piercings", xlab = "Group", 
+                  theme = 2, point.o = .8, cap.beans = TRUE)
+
+#13.1.1: Null v Alternative Hypothesis
+#In null hypothesis test, always start with null hypothesis
+#Specific hypothesis will depend on type of question you're asking
+#In general, states: nothing is going on and everything is the same
+#For example, in body piercing study, null hypothesis is that 
+#American and European pirates have the same number of body piercings, on average.
+
+#Alternative hypothesis is opposite of null hypothesis.
+#Ie, American and European pirates do NOT have the same number of piercings on average.
+#Can have different types of alternative hypotheses depending on how specific you want
+#to be about your prediction.
+#Can make a 1-sided (or 1 tailed) hypothesis by predicting direction of the difference
+#between American and European pirates.
+#Ex: European pirates have more piercinfs than American pirates
+#Could make 2-sided (2 tailed) alternative hypothesis that American and European
+#pirates simply differ in average number of piercings, without stating which group
+#has more than the other
+#Once null and alternative hypotheses are stated, calculate descriptive statistics.
+
+#13.1.2: Descriptive statistics
+#Descriptive stats (or sample stats) describe samples of data
+#Ex: a mean, median or sd of a dataset is a descriptive stat of that dataset
+#Let's calculate some descriptive stats on body piercing survey using summary function
+#Print descriptive statistics of the piercing data
+summary(american.bp)
+summary(european.bp)
+#Sample of 10 American pirates had 3.7 piercings on average, sample of 10 European
+#pirates had 5.3 piercings on average. Is this large or small? Are we justified
+#in concluding that American and European pirates in general differ in how many
+#piercings they have? To answer, need to calculate test statistic.
+
+#13.1.3: Test Statistics
+#Test statistic compares descriptive statistics and determines how different they are
+#Formula to calculate test stats depends on type of test (which depends on other stuff)
+#Our data calls for a two sample t-test
+#Conduct two sided t-test comparing vectors and save results
+bp.test <- t.test(x = american.bp, y = european.bp, alternative = "two.sided")
+#Print the main results
+bp.test
+#Test statistic is -2.52. If there was no difference, we'd see something close to 0
+#In order to make decidion, need to get the p-value
+
+#13.1.4: p-value
+#p-value is a probability that reflects how consistent the test stat is with the 
+#hypothesis that the groups are actually the same. OR
+#Definition of p-value: assuming that the null hypothesis is true, what is the 
+#probability that we would have gotten a test statistic as far away from 0 as the
+#one we actually got?
+#What is the p-value from our t-test?
+bp.test$p.value
+#We got p-value of .02, which means that, assuming the 2 populations have the same 
+#number of piercings on average, the probability that we would get a test stat as large
+#as -2.52 is 2.1%. That is small, but is it small enough to decide that the null hypothesis
+#is not true? No definitive answer, but most use a threshold of p < .05 to determine
+#if we should reject null hypothesis or not. 
+#In other words: if p-value < .05, reject null hypothesis. Because ours is .02, we
+#WOULD reject null hypothesis and conclude two populations are NOT the same.
+
+#13.1.4.2: p-values are bullshit detectors against null hypothesis
+#Goes off when p-values are too small
+#If p-value is too small, detector goes off and says "Bullshit! No way you would get
+#data like that if the groups were the same.
+#If not too small, alarm stays silent, we conclude we can't reject null hypothesis
+
+#13.1.4.3: How small a p-value is too small?
+#Traditionally use p -value of 0.05 (or sometimes 0.01) to determine "statistical significance"
+#Not a magic number (.06 not that different from .04)
+#Arbitrary number, but used to stay consistent
+
+#13.1.4.4: Does the p-value tell us the probability that the null hypothesis is true?
+#NO. In other words, if you calculate a p-value of 0.04, this does not mean the
+#probability that the null hypothesis is true is 4%.
+#Rather, it means that *if the null hypothesis was true* the probability of getting
+#the result you got was 4%
+
+####Chapter 13.2: Hypothesis test objects: htest####
+#R stores hypothesis tests in special object classes called htest
+#htest objects contain all the major results from a hypothesis test, from the test
+#statistic, to the p-value, to a confidence interval. 
+#Let's create an htest object called height.htest with the results from a two sample 
+#t-test comparing the heights of male and female pirates. 
+height.htest <- t.test(formula = height~sex, data = pirates, 
+                       subset = sex %in% c("male", "female"))
+#Once you've created an htest object, you can view a print-out of the main resulsts by
+#just evaluatin the objectname.
+height.htest
+#Just like in dataframes, you can also access specific elements of the htest objec by
+#using the $. To see all the named elements in the object, run names()
+#Show me all the elements in the height.htest object
+names(height.htest)
+#If we want to access the test statistic or p-value directly, we can use $
+#Get the test statistic
+height.htest$statistic
+#Get the p-value
+height.htest$p.value
+#Get a confidence interval for the mean
+height.htest$conf.int
+
+####Chapter 13.3: T-test: t.test()####
+#To compare the mean of 1 group to a specific value, or to compare the means of 
+#2 groups, you do a t-test function, it can take several arguments.
+
+#13.3.1: 1-sample t-test
+#In a one-sample t-test, you compare the data from one group of data to some
+#hypothesized mean. For example, if someone said that pirates on average have 5 
+#tattoos, we could conduct a one-sample test comparing the data from a sample of
+#pirates to a hypothesized mean of 5. 
+#To conduct a one-sample t-test, enter a vector as the main argument x, and the null
+#hypothesis as the argument mu. 
+#We'll conduct a t-test to see if the average number of tattoos a pirate has is different than 5
+tattoo.ttest <- t.test(x = pirates$tattoos, mu = 5)
+#Print the result
+tattoo.ttest
+#Lots of info: mean was 9.43, test stat was 41.59, p-value 2e-16(basically 0)
+#Because 2e-16 is less than .05, we would reject null hypothesis that true mean is 5.
+#What happens if we change the null hypothesis to a mean of 9.4?
+#Because the sample mean was 9.43(close to 9.4), the test stat should decrease
+# and the p-value should increase.
+tattoo.ttest <- t.test(x = pirates$tattoos, mu = 9.5)
+tattoo.ttest
+#Test stat decreased to just -0.67, p-value increased to 0.51. In other words, our 
+#sample mean of 9.43 is reasonably consistent with hypothesis that the true 
+#population mean is 9.5
+
+#13.3.2: 2 Sample t-test
+#in a two-sample t-test, you compare the means of two groups of data and test whether
+#or not they are the same. We can specify two-sample t-tests in one of two ways. 
+#If the dv and iv are in a dataframe, we can use the formula notation in form
+#y ~ x, and specify the dataset. 
+#Formulation of a two-sample t-test
+#Method 1: Formula
+t.test(formula = y ~ x, data = df)
+#Method 2: Vector
+t.test(x = x, y = y)
+#For example, let's test a prediction that pirates who wear eye patched have fewer
+#tattoos on average than those who don't wear eye patches. Because the data are in the
+#pirates dataframe, we can do this using formula method.
+#2-sample t-test, iv = eyepatch (0 or 1), dv = tattoos
+tat.patch.htest <- t.test(formula = tattoos ~ eyepatch, data = pirates)
+tat.patch.htest
+#Because the p-value is greater than 0.05 (it's 0.221), we can't reject null hyp.
+#Show me all the elements in the htest object
+names(tat.patch.htest)
+#We can access the confidence interval for the mean difference using $
+tat.patch.htest$conf.int
+
+#Chapter 13.3.2.1: Using subset to select levels of an IV
+#If your independent variable has more than 2 values, the t.test function will return
+#an error because it doesn't know whith 2 groups you want to compare
+#Let's say we want to compare the number of tattoos of pirates of different ages
+#Will return an error because there are more than 2 levels of the age IV
+t.test(formula = tattoos ~ age, data = pirates)
+#To fix it, need to tell function which two values of age we want to test
+#Use subset argument and indicate which values of the IV want to test using %in%
+#Compare the tattoos of pirates aged 29 and 30
+tatage.htest <- t.test(formula = tattoos ~age, data = pirates, 
+                       subset = age %in% c(29, 30))
+tatage.htest
+#Got a p-value of 0.79, which suggests we should fail to reject null hypothesis
+#Can select any subset of data, not just primary independent variables
+#Let's say we want to compare number of tattoos between pirates who wear headbands
+#or not, but only female pirates
+#Is there an effect of college on # of tattoos, only for female pirates
+t.test(formula = tattoos ~ college, data = pirates, subset =sex == "female")
+
+####Chapter 13.4: Correlation: cor.test()####
+#Next we'll cover two sample correlation tests
+#In a correlation test, you're assessing the relationship between two variables on
+#a ratio or interval scale: like height and weight or income and beard length
+#Test statistic in a correlation test is called a correlation coefficient and is
+#represented by letter r. Coefficient can range from -1 to +1
+#-1 = strong negative relationship, 0 = no relationship/null hypothesis
+#+1 = strong positive relationship
+#To run a correlation test between two variables, use cor.test function
+#Can do it two ways
+#If x and y are columns in a data frame: formula = ~ x + y
+#If x and y are separate vectors not in df, use vector notation (x, y)
+#Correlation test-correlating two variable x and 
+#Method 1: Formula notation
+cor.test(formula = ~ x + y, data = df)
+#Method 2: Vector notation
+cor.test(x = x, y = y)
+#Let's conduct correlation test on pirates dataset to see if there's a relationship
+#between a pirate's age and number of parrot's they've had in their lifetime 
+#Method 1
+age.parrots.ctest <- cor.test(formula = ~ age + parrots, data = pirates)
+age.parrots.ctest
+#Method 2
+age.parrots.ctest <- cor.test(x = pirates$age, y = pirates$parrots)
+age.parrots.ctest
+#Positive correlation of 0.19 and a very small p-value
+#To see info we can extract for this test, run command names()
+names(age.parrots.ctest)
+#Let's look at the confidence interval for the population correlation coefficient
+age.parrots.ctest$conf.int
+#Just like t.test, we can use subset argument in the cor.test function to conduct
+#a test on a subset of an entire df
+#Is there a correlation between age and number of parrots only for female pirates?
+cor.test(formula = ~age + parrots, data = pirates,
+         subset = sex == "female")
+#Results pretty much identical. Strength of the relationship between a pirate's age and
+#the number parrots they've owned is pretty much the same for female pirates and 
+#pirates in general.
+
+####Chapter 13.5: Chi-square: chsq.test()####
+#Test whether or nor there is a difference in the rates of outcomes on a nominal scale
+#Test statistic is x^2 and can range from 0 to 
+#Null hypothesis is that x^2 = 0 which means no relationship
+#Key difference between chisq.test and other hypothesis tests is that chisq.test 
+#requires a table created using the table() function as its main argument. 
+
+#13.5.0.1: 1-sample Chi-square test
+#If you conduct a 1 sample chi-square test, you are testing if there is a difference
+#in the number of members of each category in the vector
+#In other words, are all category memberships equally prevalent? General form:
+chisq.test(x = table(x))
+#Let's conduct a chi-square test to see if all pirate colleges are equally prevalent
+#in the pirates data. We'll start by creating a table of the college data
+#Frequency table of pirate colleges
+table(pirates$college)
+#Are all colleges equally prevalent?
+college.ctest <- chisq.test(x = table(pirates$college))
+college.ctest
+#Test stat of 99.86 and tiny p-value, we can reject the null hypothesis, certain
+#colleges are more popular than others
+
+#13.5.0.2: 2-sa#If you want to see if the frequency of one nominal variable depends 
+#on a second nominal variable, you'd do a 2-sample chi-square test
+#For ex, we might want to know if there is a relationship between the college
+#a pirate went to, and whether or not they wear an eyepatch
+#Do pirates that wear eyepatches come from different colleges than those that don't?
+table(pirates$eyepatch, pirates$college)
+#Is there a relationship between a pirate's college and whether or not they wear
+#an eyepatch
+colpatch.cstest <- chisq.test(x = table(pirates$college, pirates$eyepatch))
+#x^2 = 0, pvalue = 1, fail to reject null hypothesis, not enough info to determine 
+#if pirates from different colleges differ in how likely they are to wear eyepatches
+
+#13.5.1: Getting APA style conclusions with the apa function
+#APA rules specify exactly how to report the results of the most common tests
+#You can read values directly from test result, but can just use apa function
+#Following 2 sample t-test on the pirates dataset that compares whether or not there 
+#is a significant age difference between pirates who wear headbands and those who don't
+test.result <- t.test(age ~ headband, data = pirates)
+test.result
+#Test stat is 0.35, degrees of freedom in 135.47, p-value is 0.73. 
+#Let's see how the apa function gets these values directly from test object
+yarrr::apa(test.result)
+#Let's see how it works on a correlation test where we correlate a pirate's 
+#age with the number of parrot they've owned
+#Print an apa style conclusion of the correlation between a pirate's age & #parrots
+age.parrots.ctest <- cor.test(formula = ~ age + parrots, data = pirates)
+age.parrots.ctest
+#Print apa style conclusion!
+yarrr::apa(age.parrots.ctest)
+
+####Chapter 13 exercises####
+#Do male pirates have significantly longer beards than female pirates? 
+#Test this by conducting a t-test on the relevant data in the pirates dataset. 
+beard.sex.htest <- t.test(formula = beard.length ~ sex,
+                          subset = sex %in% c("male", "female"), 
+                          data = pirates)
+beard.sex.htest
+
+#Are pirates whose favorite pixar movie is Up more or less likely to wear an eye patch 
+#than those whose favorite pixar movie is Inside Out? 
+#Test this by conducting a chi-square test on the relevant data in the pirates dataset. 
+df <-subset(pirates, fav.pixar %in% c("Up", "Inside Out"))
+pixar.ep.table <- table(df$fav.pixar, df$eyepatch)
+pixar.ep.htest <- chisq.test(pixar.ep.table)
+pixar.ep.htest
+yarrr::apa(pixar.ep.htest)
+
+#Do longer movies have significantly higher budgets than shorter movies?
+#Conduct a correlation test on appropriate data in movies dataset
+library(yarrr)
+budget.time.htest <- cor.test(formula = ~ budget + time, data = movies)
+budget.time.htest
+
+#Do R rated movies earn significantly more money than PG-13 movies?
+#Conduct a t-test on relevant data in movies dataset
+revenue.rating.htest <- t.test(formula = revenue.all ~ rating, 
+                               subset = rating %in% c("R", "PG-13"), data = movies)
+revenue.rating.htest
+
+#Are certain movie genres significantly more common than others in the dataset?
+#Conduct a 1 sample chi-square test on relevant data
+genre.table <- table(movies$genre)
+genre.htest <- chisq.test(genre.table)
+genre.htest
+apa(genre.htest)
+
+#Do sequels and non-sequels differ in their ratings. 
+#Conduct a 2-sample chi-square test on relevent data
+genre.sequel.table <- table(movies$genre, movies$sequel)
+genre.sequel.table <- genre.table + 20
+genre.sequel.htest <- chisq.test(genre.sequel.table)
+genre.htest
