@@ -1904,3 +1904,1112 @@ genre.sequel.table <- table(movies$genre, movies$sequel)
 genre.sequel.table <- genre.table + 20
 genre.sequel.htest <- chisq.test(genre.sequel.table)
 genre.htest
+
+####Chapter 14: ANOVA####
+#Conduct an ANOVA when testing the effect of one or more nominal IVs on a numerical DV
+#A nominal (factor) variable is one that contains a finite # of categories with no 
+#inherent order. Ex: gender, profession, experimental conditions
+#If you include one IV is called a One-way ANOVA
+#If you include 2 IV, this is called a two-way ANOVA
+#Let's say we want to test how well each of 3 different cleaning fluids are at getting
+#poop off the poop deck. Do the following: over the course of 300 cleaning days, clean
+#different areas of the deck with 3 different cleaners. Then record how long it takes for
+#each cleaner to clean its portion of the deck. At the same time you could also 
+#measure how well the cleaner is at cleaning two different types of poop that usually
+#show up on your deck: shark and parrot. Here the IVs cleaner and type are factors, 
+#DV time is numeric. Data recorded in poopdeck df in yarrr.
+library(yarrr)
+head(poopdeck)
+#Visualize with pirateplot
+pirateplot(formula = time ~cleaner + type, data = poopdeck,
+           ylim = c(0, 150), xlab = "Cleaner", 
+           ylab = "Cleaning Time (min)", main = "Poopdeck Data",
+           back.col = gray(.97), cap.beans = TRUE, theme = 2)
+#Given this data, we can use ANOVA to answer foud separate questions:
+#1: Is there a differnce between the different cleaners on cleaning time (ignoring poop)
+#type: Analysis = One way ANOVA, Formula = time ~ cleaner
+#2: Is there a difference between the different poop types on cleaning time (ignoring)
+#which cleaner is used? Analysis = One way ANOVA, Formula = time ~ type
+#3: Is there a *unique* effect of the cleaner or poop types on cleaning time?
+#Analysis = Two way ANOVA, Forumla = time ~ cleaner + type
+#4: Does the effect of cleaner depend on the poop type?
+#Analysis = Two way ANOVA with interaction term, Formula = time ~ cleaner * type
+
+####Chapter 14.1: Full-factorial between-subjects ANOVA####
+#Many types of ANOVAs that depend on type of data you're analyzing
+#We'll focus on full-factorial, between-subjects ANOVAs
+#These are the simplest types which are used to analyze a standard experimental design
+#In a full factorial, between-subject ANOVA, participants are randomly assigned to a 
+#unique combination of factors-where a combination of factors means a specific 
+#experimental condition. 
+#For ex: consider a psych study comparing effects of caffeine on cognitive performance.
+#The study could have 2 Ivs: drink type (soda v. coffee v. energy drink), and drink
+#dose (0.25L, 0.5L, 1L). 
+#In a full factorial design, each participant in the study would be randomly assigned 
+#to one drink type and one dose condition. In this desing there would be 3x3=9 conditions
+#From now on, full factorial, between subjects = standard ANOVAs
+
+#14.1.1: What does ANOVA stand for?
+#Analysis of Variance-uses variances to determine whether or not there are "real"
+#differences in the means of groups.
+#Specifically looks at how variable data are *within* groups and compares that to the
+#variability of data *between* groups. If the between group variance is large compared
+#to the within group variance, ANOVA will conclude that the groups do differ in their
+#means. If the between group variance is small compared to the within group variance, 
+#the ANOVA will conclude that the groups are all the same. 
+
+####Chapter 14. 2: Four steps to conduct an ANOVA####
+#1: Create an ANOVA object using the aov() function. Specify the IV and DV(s) with a
+#formula with the format y ~ x1 + x2 where y is the DV and x1, x2... are one (or more)
+#factor independent variable.
+#Step one: Create an aov object
+mod.aov <- aov(formula = y ~ x1 + x2, data =  data)
+#2: Create a summary ANOVA table by applying summary() function to object from Step 1
+#Step two: Look at a summary of the aov object
+summary(mod.aov)
+#3: If necessary, calculate post-hoc tests by applying a post-hoc testing function like
+#TukeyHSD() to the ANOVA object created in step 1
+#Step three: calculate post-hoc tests
+TukeyHSD(mod.aov)
+#4: if necessary, interpret the nature of the group differences by creating a linear
+#regression object using lm() using same arguments used in the aov() function in step 1
+#Step four: Look at coefficients
+mod.lm <- lm(formula = y ~ x1 + x2 + ..., data = data)
+summary(mod.lm)
+
+####Chapter 14.3: Ex: One-Way ANOVA####
+#Lets do an example by running both a one-way ANOVA on the poopdeck data. We'll set
+#cleaning time as 'time' as the DV and the cleaner type 'cleaner' as the IV
+yarrr::pirateplot(time ~ cleaner, data = poopdeck, theme = 2,
+                  cap.beans = TRUE, main = "formula = time ~ cleaner")
+#From the plot, looks like cleaners a and b are the same, and cleaner c is a bit
+#faster. To test this, we'll create an ANOVA object with aov
+#Because 'time' is the DV and 'cleaner' is the IV, we'll set formula = time ~ cleaner
+#Step 1: aov object with time as DV and cleaner as IV
+cleaner.aov <- aov(formula = time ~ cleaner, data = poopdeck)
+#Now to see a full ANOVA summary table of the ANOVA object, apply the summary() to the
+#ANOVA object from Step 1
+#Step 2: Look at the summary of the anova object
+summary(cleaner.aov)
+#Main result from our table is that we have a significant effect of cleaner on cleaning
+#time (F(2, 597)) = 5.29, p = 0.005. 
+#However, ANOVA table doesn't tell us which levels of the IV differ
+#In other words, don't know which cleaner is better than which.
+#To know this, need to conduct a post-hoc test
+#If you've found a significant effect of a factor, you can do a post-hoc test to test
+#the difference between each all pairs of levels of the IV. 
+#Many different types of pairwise comparisons that make different assumptions
+#One of the most common is the Tukey Honestly Significant Difference (HSD) test
+#Step 3: Conduct post-hoc tests
+TukeyHSD(cleaner.aov)
+#Table shows us pair-wise differences between each group pair. Diff column shows us mean
+#difference between groups, a CI for the difference, and a p-value testing the null
+#hypothesis that the group differences are not different. 
+#Often helpful to combine a summary table with regression summary table-results can
+#be easier to interpret. Use lm() function, result will be identical.
+#Step 4: Create a regression object
+cleaner.lm <- lm(formula = time ~ cleaner, data = poopdeck)
+#Show summary
+summary(cleaner.lm)
+#Regression table doesn't give tests for each variable like ANOVA table
+#Instead, tells how different each level of an IV is from a default value
+#You can tell which value of an IV is the default variable just by seeing which value is
+#mmissing from the table. In this case, no coefficient for cleaner a, so that must
+#be default value
+#Intercept tells us the mean of the default value. In this case, the mean time of cleaner
+#a was 66.02. Coefficients for other levels tell us that cleaner b is, on average, 
+#.042 minutes faster than cleaner a, and cleaner c is, on average, 6.94 min faster
+#than cleaner a. These are the same differences we saw in the Tukey HSD test!
+
+####Chapter 14.4: Ex: Two-Way ANOVA####
+#To conduct a two-way ANOVA, just include additional IVs in the regression model formula
+#Let's conduct a two-way ANOVA with both cleaner and type as IVs
+#Step 1: Creat ANOVA object with aov()
+cleaner.type.aov <- aov(formula = time ~ cleaner + type, data = poopdeck)
+#Step 2: Get ANOVA table with summary ()
+summary(cleaner.type.aov)
+#Looks like we found significant effects of both IVs
+#Step 3: Conduct post-hoc tests
+TukeyHSD(cleaner.type.aov)
+#The only non-significant group difference we found is between cleaner b and cleaner a
+#All other comparisons were significant
+#Step 4: Look at regression coefficients
+cleaner.type.lm <-lm(formula = time ~ cleaner + type, data = poopdeck)
+summary(cleaner.type.lm)
+#Now we need to interprety the results in respect to two default values (here, 
+#cleaner = a, and type = parrot). The intercept means that the average time for 
+#cleaner a on parrot poop was 54.36 minutes. Additionally, the average time to clean
+#shark poop was 23.33 minutes slower than when cleaning parrot poop. 
+
+#14.4.1: ANOVA with interactions
+#Interactions between variables test whether or not the effect of one variable depends
+#on another variable. 
+#For ex: we could use an interaction to answer the question: Does the effect of cleaners
+#depend on the type of poop they are used to clean
+#To include interaction terms in an ANOVA, use the * instead of + between the terms in
+#the formula. Note that when you include an interaction term in a regression object,
+#R will automatically include the main effects as well.
+#Let's repeat our previous ANOVA with 2 IVs, but now we'll include the interaction
+#between cleaner and type. We'll set the formula to time ~ cleaner * type.
+#Step 1: Create ANOVA object with interactions
+cleaner.type.int.aov <- aov(formula = time ~ cleaner * type, data = poopdeck)
+#Step 2: Look at summary table
+summary(cleaner.type.int.aov)
+#Looks like we did indeed find a significant interaction between cleaner and type. 
+#In other words, the effectiveness of a cleaner depends on the type of poop it's being
+#applied to. This makes sense given our plot of the data. 
+#To understand the nature of the difference, we'll look at the regression coefficients
+#from a regression object
+#Step 4: Calculate regression coefficients
+cleaner.type.int.lm <- lm(formula = time ~ cleaner * type, data = poopdeck)
+summary(cleaner.type.int.lm)
+#To interpret this table, we need to know what the default values are. We can tell this
+#from the coefficients that are 'missing' from the table. 
+#Because I don't see terms for 'cleanera' or 'typeparrot', this means that 
+#cleaner = a and type = parrot are the defaults.
+#We can interpret the coefficients as 'differences' between a level and the default
+#Looks like for parrot poop, cleaners b and c both take more time than cleaner a 
+#(the default). Additionally, shark poop tends to take much longer than parrot poop to
+#clean (the estimate for typeshark is positive).
+#The interation terms tell us how the effect of cleaners 'changes' when one is cleaning
+#shark poop. The negative estimate (-16.96) for 'cleanerb:typeshark means that cleaner
+#b is, on average, 16.96 min 'faster' when cleaning shark poop compared to parrot poop.
+#Because the previous estimate for cleaner b (for parrot poop) was just 8.06, this
+#suggests that cleaner b is 'slower' than cleaner a for parrot poop, but 'faster' than
+#cleaner a for shark poop. Same thing for cleaner c, which simply has stronger
+#effects in both directions.
+
+####Chapter 14.5: Type I, Type II, and Type III ANOVAS####
+#Types differ in how they calculate variability (specifically the 'sum of squares')
+#If data is relatively 'balanced' meaning there are relatively equal numbers of
+#observations in each group, then all three types will give you the same answer.
+#However, if data are 'unbalanced,' meaning that some groups of data have many more
+#observations than others, then you need to use Type II or Type III
+#The standard aov() function in base-R uses Type I sum of squares.
+#To use Type II or Type III, use ANOVA function in car package.
+#Anova function has an argument called 'type' that allows you to specify the
+#type of ANOVA you want to calculate
+#Calculate 3 separate ANOVAs from the poopdeck data using 3 different types
+#Create a regression object with lm()
+#ANOVA function require you to enter a regression object as the main argument and
+#'not' a formula and dataset.
+#That is, you need to first create a regression object from the data with lm(), then
+#enter that object into the Anova() function
+#Step 1: Calculate regression object with lm()
+time.lm <- lm(formula = time ~ type + cleaner, data = poopdeck)
+#Now that we've created the regression object time.lm, I can calculate the 3 different
+#types of ANOVAs by entering the object as the main argument to either aov() for a 
+#Type I ANOVA or anova() in the car package for a Type II or Type III ANOVA
+#Type I ANOVA-aov()
+time.I.aov <- aov(time.lm)
+#Type II ANOCA-Anova(type = 2)
+time.II.aov <- car::Anova(time.lm, type = 2)
+#Type III ANOVA-Anova(type = 3)
+time.III.aov <- car::Anova(time.lm, type = 3)
+#Data in the poopdeck df are perfectly balanced. To see if data are balanced:
+with(poopdeck,
+     table(cleaner, type))
+#Perfectly balanced, so it doesn't matter which type of ANOVA we use
+
+####Chapter 14.6: Getting additional information from ANOVA objects####
+#To see everything that's stored in an ANOVA object, run the command 
+names(cleaner.type.int.aov)
+#For example, the 'fitted.values' contains the model fits for the DV (time) for every
+#observation in our dataset. We can add these fits back to the dataset with the $
+#operator and assignment. 
+#Let's get the model fitted values from both the interactin model (cleaner.type.aov)
+#and the non-interaction model (cleaner.type.int.aov) and assign them to new columns.
+#Add the fits for the interaction model to the dataframe as int.fit
+poopdeck$int.fit <- cleaner.type.int.aov$fitted.values
+#Add the fits for the main effects model to the dataframe as me.fit
+poopdeck$me.fit <- cleaner.type.aov$fitted.values
+#Let's look at the first few rows in the table to see the fits for the first few
+head(poopdeck)
+#You can use these fits to see how well or poorly the models were able to fit the data
+#We can calculate how far each model's fits were from the true data as follows
+#How far were the interaction model fits from the data on average
+mean(abs(poopdeck$int.fit - poopdeck$time))
+#How far were the main effect model fits from the data on average
+mean(abs(poopdeck$me.fit - poopdeck$time))
+#The interaction model was off from the data by  15.35 min on average, while the main
+#effects model was off from the data by 16.54 on average. 
+#Not surprising as the interaction model is more complex than the main effects only
+#Just because the interaction is better at fitting the data doesn't necessarily
+#mean that the interaction is either meaningful or reliable.
+
+####Chapter 14.7: Repeated measures ANOVA using the lme4 package####
+#If you're conducting an analyses where you're repeating measurements over one or more 
+#third variables, do a mixed-effects regression analysis using lmer function
+#In poopdeck data, we have repeated measures for days. That is, on each day, we had 6 
+#measurements. Possible overall cleaning times differed depending on the day.
+#We can account for this by including random intercepts for day by adding the 
+#(1|day) term to the formula specification
+library(lme4)
+#Calculate a mixed-effects regression on time with two fixed factors (cleaner and type)
+#and one repeated meaure(day)
+my.mod <- lmer(formula = time ~ cleaner + type + (1|day), data = poopdeck )
+
+####Chapter 14 exercises####
+#Is there a significant relationship between the pirate's favorite pixar movie and the 
+#number of tattoos s(he) has? Conduct an appropriate ANOVA with fav.pixar as the IV and
+#tattoos as the DV. If there is a significant relationship, conduct a post-hoc
+#test to determine which levels of the IV differ.
+pixar.aov <- aov(formula = tattoos ~ fav.pixar, data = pirates)
+summary(pixar.aov)
+#No significant effect
+
+#Is there a significant relationship between a pirate's favorite pirate and how many
+#tattoos they have? Conduct an appropriate ANOVA with favorite.pirate as the IV and 
+#tattoos as the DV. If there is a significant relationship, conduct a post-hoc test
+#to determine which levels of the IV differ.
+favpirate.aov <- aov(formula = tattoos ~ favorite.pirate, data = pirates)
+summary(favpirate.aov)
+#No significant effect
+
+#Repeat analysis but include both IVs fav.pixar and favorite.pirate in the ANOVA. 
+#Do conclusions differ when including both variables?
+pirpix.aov <- aov(formula = tattoos ~ favorite.pirate + fav.pixar, data = pirates)
+summary(pirpix.aov)
+
+#Test if there is an interaction between fav.pixar and favorite.pirate on number of tats
+pirpix.int.aov <- aov(formula = tattoos ~ favorite.pirate * fav.pixar, data = pirates)
+summary(pirpix.int.aov)
+#Still nothing
+
+####Chapter 15: Regression####
+
+####Chapter 15.1: The Linear Model####
+#Easily the most famous and widely used model in all of stats.
+#It can apply to so many interesting research questions where you are trying to predict
+#a continuous variable of interest (the response of DV) on the basis of one or more
+#other variables (the predictor or IVs)
+#For example, we can use a regression model to understand how the value of a diamond
+#relates to two IVs: its weight and its clarity. 
+
+####Chapter 15.2: Linear regression with lm()####
+#To estimate beta weights of a linear model R, use lm() function with 3 main arguments:
+
+#15.2.1: Estimating the value of diamonds with lm()
+#Start using example using a dataset in yarrr package diamonds
+library(yarrr)
+head(diamonds)
+#Goal is to come up with a linear model we can use to estimate the value of each diamond
+#(DV = value) as a linear combination of 3 IVs: weight, clarity, and color
+#To estimate each of the 4 weights, we'll use lm(). Because value is the DV, we'll 
+#specify the formula as formula = value ~ weight + clarity + color
+#Create a linear model of diamond values
+diamonds.lm <- lm(formula = value ~weight + clarity + color, data = diamonds)
+#Print summary stats
+summary(diamonds.lm)
+#Which components are in the regression object?
+names(diamonds.lm)
+#The coefficients in the diamond model
+diamonds.lm$coefficients
+#Coefficient stats in the diamond model
+summary(diamonds.lm)$coefficients
+
+#15.2.2: Getting model fits with fitted.values
+#To see the fitted values from a regression object, access the fitted.values 
+#attribute from a regression object with $fitted.values
+#Add the fitted values as a new column in the dataframe
+diamonds$value.lm <- diamonds.lm$fitted.values
+#Show the result
+head(diamonds)
+#According to the model, the first diamond, with a weight of 9.35, a clarity of 0.88, 
+#and a color of 4 should have a value of 186.08. Not far from true value of 182.5
+#You can use fitted values from a regression object to plot relationship between true
+#values and model fits. If model does a good job, data should fall on diagonal line
+#Plot the relationship between true diamond values and linear model fitted values
+plot(x = diamonds$value, y = diamonds.lm$fitted.values,
+     xlab = "True Values", ylab = "Model Fitted Values", 
+     main = "Regression fits of diamond values")
+abline(b = 1, a = 0)
+
+#15.2.3: Using predict() to predict new data from a model
+#Once you've created a regression model with lm(), you can use it to easily predict
+#results from new datasets using the predict function
+#Let's say we discovered 3 new diamonds abd use predict function to predict value of 
+#each of these diamonds using regression model diamond.lm created before.
+#Two main arguments are object-the regression object and newdata-the datafram
+#Create a dataframe of new diamond data
+diamonds.new <- data.frame(weight = c(12, 6, 5), 
+                           clarity = c(1.3, 1, 1.5), 
+                           color = c(5, 2, 3))
+#Predict value of the new diamonds
+predict(object = diamonds.lm, newdata = diamonds.new)
+#Results tell us the new diamonds are expected to have values of 200.5, 182.3, and 190.5
+
+#15.2.4: Including interactions in models: y ~ x1 * x2
+#To include interaction terms in a regression model, just put an * between the 
+#IVs. For ex, to create a regression model on the diamonds data with an interaction
+#term between weight and clarity, use formula = value ~ weight * clarity
+#Create a regression model with interactions between IVs weight and clarity
+diamonds.int.lm <- lm(formula = value ~ weight * clarity, data = diamonds)
+#Show summary stats of model coefficients
+summary(diamonds.int.lm)$coefficients
+
+####Chapter 15.3: Comparing regression models with anova()####
+#A good model should only be as complex as necessary to describe a dataset
+#To compare the fits of two models, you can use anova() function with the 
+#regression objects as two separate arguments. 
+#The function will take the model objects as arguments, and return an ANOVA testing
+#whether the more complex model is significantly better at capturing the data than 
+#the simpler model. 
+#If the resulting p-value is sufficiently low, we conclude that the more complex model
+#is significantly better than the simpler model, and thus favor the more complex model
+#If the p-value is greater than 0.05, favor the simpler model. 
+
+#Let's do an example with diamonds dataset.
+#Create three regression models that each predict a diamond's value
+#Models will differ in complexity (number of IVs they use)
+#Model 1: 1 IV (only weight)
+diamonds.mod1 <- lm(value ~ weight, data = diamonds)
+#Model 2: 2 IVs (weight and clarity)
+diamonds.mod2 <- lm(value ~ weight + clarity, data = diamonds)
+#Model 3: 3 IVs (weight, clarity, and color)
+diamonds.mod3 <- lm(value ~ weight + clarity + color, data = diamonds)
+#Let's compare these models and see which provides the best fit of the data. 
+#First compare 2 simplest. Because these differ in the use of clarity (only model 2
+# has it), ANOVA will test whether or not including clarity leads to sig improvement
+#Compare model 1 to model 2
+anova(diamonds.mod1, diamonds.mod2)
+#Result shows a df of1 (indicating more complex model has one additional parameter)
+#and very small p-value (<.001). This means that adding the clarity IV to the model
+#did lead to a significantly improved fit over model 1.
+#Next, let's compare model 2 and model 3. This will tell whether adding color further
+#improves model
+#Compare model 2 and model 3
+anova(diamonds.mod2, diamonds.mod3)
+#Result shows a non-significant result (p = 0.21). We should reject model 3 and stick
+#with model 2 with only 2 IVs.
+#Don't need to compare models that only differ in one IV-you can also compare models 
+#that differ in multiple DVs. 
+#Compare model 1 to model 3
+anova(diamonds.mod1, diamonds.mod3)
+#Result shows that model 3 did indeed provide a significantly better fit to the data 
+#compared to model 1. However, as we know from our previous analysis, model 3 is not
+#significantly better than model 2. 
+
+####Chapter 15.4: Regression on non-Normal data with glm()####
+#Argument: formula, data, subset-the same arguments as in lm()
+#Argument: family-one of the following strings, indicating the link function for the
+#general linear model. 
+#Family name: "binomia"-binary logistic regression, useful when the response is 0 or 1
+#Family name: "gaussian"-standard linear regression. Using this family will give you
+#the same result as lm()
+#Family name: "Gamma"-gamma regression, useful for highly positive skewed data
+#Family name: "inverse.gaussian"-inverse- regression, useful when the dv is
+# strictly positiv and skewed to the right
+#Family name: "poisson"-poisson, useful for count data. Ex: How many 
+#parrots has a pirate owned over their lifetime?
+
+#We can use standard regression with lm() when DV is Normally distributed. 
+#When DV doesn't follow Normal distribution, need to use Generalized Linear Model
+#GLM is a more general class of linear models that change the distribution of the DV
+#Allows you to use the linear model even when DV isn't a normal bell shape.
+
+####Chapter 15.5: Logistic regression with glm(family = "binomia")####
+#Most common non-normal regression analysis is logistic regression, where DV is just
+#0s and 1. To do logistic analysis with glm(), use the family = binomial argument.
+#Let's run a logistic regression on diamonds dataset.
+#First create a binary variable indicating whether value is greater than 190 or not
+diamonds$value.g190 <- diamonds$value > 190
+#Conduct a logistic regression on the new binary variable
+diamond.glm <- glm(formula = value.g190 ~ weight + color, 
+                   data = diamonds, family = binomial)
+#Print coefficients from logistic regression
+summary(diamond.glm)$coefficients
+#Just like with regular regression, we can get the fitted values from the model and put
+#them back into our dataset to how well the model fit the data
+#Add logistic fitted values back to the dataframe as new column pred.g190
+diamonds$pred.g190 <- diamond.glm$fitted.values
+#Look at the first few ros of the named columns
+head(diamonds[c("weight", "clarity", "color", "value", "pred.g190")])
+#Looking at the first few observations, looks like the probabilities match the data
+#pretty well. 
+#Just like with regular regression, you can use the predict() function along with the
+#results of a glm() object to predict new data.
+#Predict the 'probability' that the 3 new diamonds will have a value greater than 190
+predict(object = diamond.glm, newdata = diamonds.new)
+#Results are logit-transformed probabilities. To turn them back into probabilities, need
+#to invert them by applying the inverste logit function
+#Get logit predictions of new diamonds
+logit.predictions <- predict(object = diamond.glm, newdata = diamonds.new)
+#Apply inverse logit to transform probabilities
+prob.predictions <- 1 / (1 + exp(-logit.predictions))
+#Print final predictions!
+prob.predictions
+
+#15.5.1: Adding a regression line to a plot
+#Put regression object you created with as the main argument to.
+#Scatterplot of diamond weight and value
+plot(x = diamonds$weight, y = diamonds$value,
+     xlab = "Weight", ylab = "Value", main = "Adding a regression line with abline()")
+#Calculate regression model
+diamonds.lm <- lm(formula = value ~ weight, data = diamonds)
+#Add regression line
+abline(diamonds.lm, col = "red", lwd = 2)
+
+#15.5.2: Transforming skewed variables prior to standard regression
+#The distribution of movie revenues is highly skewed
+hist(movies$revenue.all, main = "Movie revenue\nBefore log-transformation")
+#If you have a highly skewed variable that you want to include in a regression analysis,
+#you have 2 options:
+#Option 1: use general linear model glm() with an appropriate family
+#Option 2: do a standard regression analysis with lm(), but first transform the variable
+#into something less skewed. For highly-skewed data, most common transformation is
+# a log-transformation
+
+#For example, distribution of movie revenues in movie dataset aren't Normally
+#distributed at all. Avatar made a ton, others much less.
+#If we want to conduct a standard regression analysis on these data, we need to create
+#a new log-transformed version of the variable. 
+#Create a new log-transformed version of the movie revenue
+movies$revenue.all.log <- log(movies$revenue.all)
+#Distribution of log-transformed revenue is much less skewed
+hist(movies$revenue.all.log, main = "Log-transformed Movie revenue")
+
+####Chapter 15 exercises####
+#Following questions apply to auction dataset in yarrr package. Dataset contains
+#info on about 1000 ships sold at pirate auction
+#The column jbb is the "Jack's Blue Book" value of a ship. Create a regression object
+#called jbb.cannon.lm predicting the JBB value of ships based on the number of cannons
+#it has. Based on your result, how much value does each additional cannon bring to a ship
+#jbb.cannon.lm model DV = jbb IV = cannons
+jb.cannon.lm <- lm(formula = jbb ~ cannons, data = auction)
+#Print jbb.cannon.lm coefficients
+summary(jb.cannon.lm)$coefficients
+
+#Repeat previous regression, but do two separate regressions: one on modern ships and
+#one on classic ships. Is the relationship between cannons and JBB the same?
+#jbb.cannon.modern.lm model; DV = jbb, IV = cannons. Only modern ships
+jbb.cannon.modern.lm <- lm(formula = jbb ~ cannons, 
+                           data = subset(auction, style == "modern"))
+#jbb.cannon.classic.lm model; DV = jbb, IV = cannons. Only classic ships
+jbb.cannon.classic.lm <- lm(formula = jbb ~ cannons,
+                            data = subset(auction, style =="classic"))
+#Print jbb.cannon.modern.lm coefficients
+summary(jbb.cannon.modern.lm)$coefficients
+#Print jbb.cannon.classic.lm coefficients
+summary(jbb.cannon.classic.lm)$coefficients
+
+#Is there a significant interaction between a ship's style and its age on its JBB value?
+#If so, how do you interpret the interaction
+#int.lm model; DV = jbb, IV = interaction between style and age
+int.lm <- lm(formula = jbb ~ style * age, data = auction)
+#Print int.lm coefficients
+summary(int.lm)$coefficients
+
+#Create a regression object called predicting the JBB value of ships based on cannons,
+#rooms, age, condition, color, and style. Which aspects of a ship significantly
+#affect its JBB value?
+#jbb.all.lm; DV = jbb, IV = everything(except price)
+jbb.all.lm <- lm(jbb ~ cannons + rooms + age + condition + color + style, data = auction)
+#Print jbb.all.lm coefficients
+summary(jbb.all.lm)$coefficients
+
+#Create a regression object predicting the actual selling value of ships based on 
+#cannons, rooms, age, condition, color, and style. 
+#prince.all.lm model; DV = prince, IV = everything except jbb
+price.all.lm <- lm(price ~ cannons + rooms + age + condition + color + style,
+                   data = auction)
+#Print price.all.lm coefficients
+summary(price.all.lm)$coefficients
+
+#Repeat previous regression analysis, but instead of using the price as the DV, use
+#binary variable price.gt.3500 indicating whether or not the ship had a selling price
+#greater than 3500. 
+#Create a new binary variable indicating whether a ship sold for more than 3500
+auction$price.gt.3500 <- auction$price > 3500
+#price.all.blr model; DV = price.gt.3500, IV = everything except jbb
+price.all.blr <- glm(price.gt.3500 ~ cannons + rooms + age + condition + color + style,
+                     data = auction, family = binomial)
+#price.all.blr coefficients
+summary(price.all.blr)$coefficients
+
+#Using price.all.lm, predict the selling price of the three new ships
+#Create a dataframe with new ship data
+new.ships <- data.frame(cannons = c(12, 8, 32), rooms = c(34, 26, 65),
+                       age = c(43, 54, 100), condition = c(7, 3, 5),
+                       color = c("black", "black", "red"), 
+                       style = c("classic", "modern", "modern"), 
+                       stringAsFactors = FALSE)
+#Predict new ship data based on price.all.lm model
+predict(object = price.all.lm, newdata = new.ships)
+
+#Using price.all.blr, predict the probability that the three new ships will have a 
+#selling price greater than 3500
+#Calculate logit of predictions
+log.pred <- predict(object = price.all.blr, newdata = new.ships)
+#Convert logits to probabilities
+1 / (1 + exp(-log.pred))
+
+####Chapter 16: Custom functions####
+
+####Chapter 16.1: Why would you want to write your own function####
+#Tons of functions built into base R, but can easily write own functions
+#In following code, define a new function called piratehist(). Just like hist()
+#function, piratehist() will take a vector of data (plus optional arguments indicated
+#by...), create a light gray histogram, and adds text to the top of the figure
+#indicating the mean and 95% CI of the data
+#Create a function called piratehist
+piratehist <- function(x,...) 
+#Create a customized histogram
+hist(x, col = gray(.5, .2), border = "white", yaxt = "n", ylab = "", ...)
+#Calculate the conf interval
+ci <- t.test(x)$conf.int
+#Define and add top-text
+top.text <- paste(
+  "Mean = ", round(mean(x), 2),
+  " (95% CI [", round(ci[1], 2),
+  ", ", round(ci[2], 2), 
+  "]), SD = ", round(sd(x), 2), 
+  sep = "")
+mtext(top.text, side = 3)
+#Now that we've defined piratehist() function, let's evaluate it on a vector of data
+#Create a pirate histogram!
+piratehist(pirates$age, xlab = "Age", main = "Pirate's Ages")
+
+#Can write a function to do anything
+#If there's anything you do repeatedly, you can define code once in a new function.
+
+####Chapter 16.2: The structure of a custom function####
+#A function is simply an object that usually takes some arguments, perfoms some action
+#(executes some R code), and then usually returns some output
+#Custom functions will have 4 attributes:
+#1 Name: what is the name of your function? You can give it any valid object name. 
+#However, be careful not to use names of existing functions
+#2 Arguments: What are the inputs to the function? Does it need a vector of numeric
+#data? Or some text?
+#3 Actions: What do you want the function to do with the inputs? Create a plot? 
+#Calculate a stat? Run a regression analysis? This is where the real code is.
+#4 Output: What do you want the code to return when it's finished with the actions?
+#Should it return a scalar stat? A vector of data? A dataframe?
+
+#Basic structure of a function
+NAME <- function(ARGUMENTS) {
+  ACTIONS
+  return(OUTPUT)
+}
+
+#16.2.1: Creating my.mean()
+#Let's create a function called my.mean() that will take a vector x as an argument, 
+#creates a new vector called output that is the mean of all the elements of x 
+#(by summing all the values in x and dividin by the length of x) then return the output
+#object to the user
+#Create the function my.mean()
+my.mean <- function(x){
+  output <- sum(x) / length(x)
+  return(output)
+}
+#Nothing obvious happens, but R has stored the new function in current working directory
+#To use, call out function like any others in R
+data <- c(3, 1, 6, 4, 2, 8, 4, 2)
+my.mean(data)
+mean(data)
+
+#16.6.2: Specifying multiple inputs
+#We'll create a function called oh.god.how.much.did.i.spend that helps hungover pirates
+#figure out how much gold they spent after a long night of pirate debauchery. 
+#Function will have 3 inputs: 
+#grogg: the number of mugs of grogg the pirate drank (costs 1)
+#port: the number of glasses of port the pirate drank (costs 3)
+#crabjuice: the number of shots of fermented crab juice pirate drank (costs 10)
+oh.god.how.much.did.i.spend <- function (grogg, port, crabjuice){
+  output <- grogg * 1 + port * 3 + crabjuice * 10
+  return(output)
+}
+#Let's test new function with different values for the inputs of grogg, port, 
+#and crab juice. How much did Tamara spend on 10 mugs grogg, 3 glasses wine, 0 shots?
+oh.god.how.much.did.i.spend(grogg = 10, port = 3, crabjuice = 0)
+#She spent 19 gold. How about Cosima who drank no grogg or port, but lots of shots?
+oh.god.how.much.did.i.spend(grogg = 0, port = 0, crabjuice = 7)
+
+#16.2.3: Including default values for arguments
+#With functions with many input, want to start adding default values
+#By doing this, R will set any inputs that the user does not specify to 0
+#Including default values for function arguments
+oh.god.how.much.did.i.spend <- function(grogg = 0, port = 0, crabjuice = 0){
+  output <- grogg * 1 + port * 3 + crabjuice * 10
+  return(output)
+}
+
+#Let's test new version of function with data from Hyejeong, who had 5 glasses of
+#port but no grogg or crab juice. 
+oh.god.how.much.did.i.spend(port= 5)
+
+####Chapter 16.3: Using if, then statements in functions####
+#Funtion has two main elements: a logical test in the parentheses and conditional code
+#in curly brackets. Code in curly brackets is conditional because it is only
+#evaluated if the logical test contained in the parentheses is TRUE. If the logical
+#test is FALSE, R will ignore all the conditional code.
+
+#Let's put some simpe if() {} statements in a new function called is.it.true().
+#The function will take a single input x. If the input x is TRUE, function will 
+#print one sentence. If the input x is FALSE, it will return a different sentence.
+is.it.true <- function(x) {
+  if(x == TRUE) {print("x was true!")}
+  if(x == FALSE) {print("x was false!")}
+}
+#Let's try evaluating the function on a few different inputs
+is.it.true(TRUE)
+is.it.true(FALSE)
+is.it.true(10 > 0)
+is.it.true(10 < 0)
+
+#Let's create a function called show.me() that takes a vector of data and either creates
+#a plot, tells the user some stats, or tells a joke! Function has 2 inputs
+#x: a vector of data
+#what: a string value that tells the function what to do with x
+#We'll set the function up to accept three different values of what-either "plot,"
+#"stats," or "tellmeajoke"
+show.me <- function(x, what) {
+  if(what == "plot"){
+    hist(x, yaxt = "n", ylab = "", border = "white", col = "skyblue", xlab = "",
+         main = "Ok! I hope you like the plot")
+  }
+  if(what == "stats") {
+    print(paste("Yarr! The mean of this data be", round(mean(x), 2),
+                "and the standard deviation be", round(sd(x), 2), sep = ""))
+  }
+  if (what == "tellmeajoke") {
+    print("I am a pirate, not your joke monkey")
+  }
+}
+show.me(x = pirates$beard.length, what = "plot")
+show.me(x = pirates$beard.length, what = "stats")
+show.me(what = "tellmeajoke")
+
+####Chapter 16.4: A worked example: plot.advanced()
+#Create our own advanced custom plotting function that acts like normal plotting
+#function, with several additional arguments.
+#1: add.mean- a logical value indicating whether or not to add lines at the mean of
+#value of x and y.
+#2: add.regression-a logical value indicating whether or not to add a linear 
+#regression line
+#3: p.threshold- a numeric scalar indicating the p.value threshold for determining
+#significance
+#4: add.modeltext-a logical value indicating whether or not to include the 
+#regression equation as a sub-title to the plot
+plot.advanced <- function (x = rnorm(100),
+                           y = rnorm(100),
+                           add.mean = FALSE,
+                           add.regression = FALSE,
+                           p.threshold = .05,
+                           add.modeltext = FALSE,
+                           ...  # Optional further arguments passed on to plot
+) {
+  
+  # Generate the plot with optional arguments
+  #   like main, xlab, ylab, etc.
+  plot(x, y, ...)
+  
+  # Add mean reference lines if add.mean is TRUE
+  if(add.mean == TRUE) {
+    
+    abline(h = mean(y), lty = 2)
+    abline(v = mean(x), lty = 2)
+  }
+  
+  # Add regression line if add.regression is TRUE
+  if(add.regression == TRUE) {
+    
+    model <- lm(y ~ x)  # Run regression
+    
+    p.value <- anova(model)$"Pr(>F)"[1] # Get p-value
+    
+    # Define line color from model p-value and threshold
+    if(p.value < p.threshold) {line.col <- "red"}
+    if(p.value >= p.threshold) {line.col <- "black"}
+    
+    abline(lm(y ~ x), col = line.col, lwd = 2) # Add regression line
+    
+  }
+  
+  # Add regression equation text if add.modeltext is TRUE
+  if(add.modeltext == TRUE) {
+    
+    # Run regression
+    model <- lm(y ~ x)
+    
+    # Determine coefficients from model object
+    coefficients <- model$coefficients
+    a <- round(coefficients[1], 2)
+    b <- round(coefficients[2], 2)
+    
+    # Create text
+    model.text <- paste("Regression Equation: ", a, " + ",
+                        b, " * x", sep = "")
+    
+    # Add text to top of plot
+    mtext(model.text, side = 3, line = .5, cex = .8)
+    
+  }
+}
+
+plot.advanced(x = pirates$age, y = pirates$tchests,
+              add.regression =  TRUE, add.modeltext = TRUE,
+              p.threshold = .05, main = "plot.advanced()",
+              xlab = "Age", ylab = "Treasure Chests Found",
+              pch = 16, col = gray(.2, .3))
+
+#16.4.1: Seeing function code
+#You can view underlying code by evaluating the name of the function 
+#yarrr package has function called transparent() that converts standard colors into
+#transparent colors
+#Show me the code in the transparent() function
+library(yarrr)
+transparent
+
+#16.4.2: Using stop() to completely stop a function and print an error
+#By default, all the code in a function will be evaluated when it is executed
+#May be cases where there's no point in evaluating some code and its best to stop
+#everything and leave function altogether
+#If R executes a stop() functio, it will automatically quit function it's currently 
+#evaluating and print an error message. 
+#You can define the exact error message you want by including a string as main argument
+#For ex: following function do.stats will print an error message if the argument mat
+#is not a matrix
+do.stats <- function(mat) {
+  if(is.matrix(mat) == F) {stop("Argument was not a matrix!")}
+  
+  #Only run if argument is a matrix!
+  print(paste("Thanks for giving me a matrix. The matrix has ", nrow(mat),
+              " rows and ", ncol(mat), 
+              " columns. If you did not give me a matrix, the function would have 
+              stopped by now",
+              sep == ""))
+}
+
+#Let's test it. First enter an argument thar is definitely not a matrix
+do.stats(mat = "This is a string, not a matrix")
+#Now enter a valid matrix argument
+do.stats(mat = matrix(1:10, nrow = 2, ncol = 5))
+
+#16.4.3: Using vectors as arguments
+#You can use any kind of object as an argument to a function
+#For ex: we could re-create the function oh.god.how.much.did.i.spend by having a 
+#single vector object as the argument, rather than three separate values
+#We'll extract the values of a, b, and c using indexing
+oh.god.how.much.did.i.spend <- function(drinks.vec) {
+  grogg <- drinks.vec[1]
+  port <- drinks.vec[2]
+  crabjuice <- drinks.vec[3]
+  
+  output <- grogg * 1 + port * 3 + crabjuice * 10
+  
+  return(output)
+}
+#To use this function, the pirate will enter the number of drinks she had as a single
+#vector with length three rather than as 3 separate scalars
+oh.god.how.much.did.i.spend(c(1, 5, 2))
+
+#16.4.4: Storing and loading your functions to and from a function file with source()
+#May find yourself writing several functions you'll want to use repeatedly
+#Can store all your functions in one R file and load into each session
+#Can put all custom functions into a single script, then you can load all functions
+#into any session by using source() function
+#Source function takes a file directory as an assignment and executes script into
+#current session
+
+#16.4.5: Testing functions
+#When writing more complex functions, need to constantly test line-by-line
+#But, because input values are defined in the input definitions, you can't actually
+#test the code line-by-line until you've defined the input objects in some other way
+
+#For ex: consider following function called remove.outliers. Goal is to take a vector
+#of data and remove any data points that are outliers. Function takes two inputs x and
+#outlier.def, where x is a vector of numerical data and outlier.def is used to define
+#what an outlier is: if a data point is outlier.def standard deviations away from the
+#mean, then it is defined as an outlier and is removed from the data vector
+
+#In the following function definition, I've included two lines where I directly assign
+#the function inuts to certain values (in this case, x is set to be a vector with 100
+#values of 1 and one outlier value of 999 and outlier.def to be 2)
+#To test the function code line by line, can uncomment test values, execute the code
+#that assigns those test values to the input objects, then run the function code
+#line by line to make sure the rest of the code works.
+remove.outliers <- function(x, outlier.def = 2) {
+  #Test values (only used to test the following code)
+  # x <-c(rep(1, 100), 999)
+  # outlier.def <- 2
+  
+  is.outlier <- x > (mean(x) + outlier.def * sd(x)) |
+                x < (mean(x) - outlier.def * sd(x))
+  
+  x.nooutliers <- x[is.outlier == FALSE]
+  
+  return(x.nooutliers)
+}
+ 
+#16.4.6: Using ... as a wildcard argument
+#For some functions, you may want to specify inputs to functins within overall function
+#For ex: if you create a custom function that includes histogram function, may also
+#want to be able to specify optional inputs for the plot. But, it would be a pain
+#to have to include all possible plotting parameters as inputs to new functions
+#Can take care of that by using the ... notation as an input to the function.
+#...will only pass arguments on to functions that are specifically written to allow
+#for optional inputs. The ... tells R user might add additional inputs to be used later
+
+#Let's create a function called hist.advanced () that plots a histogram with some
+#optional additional arguments passed on with ...
+hist.advanced <- function(x, add.ci = TRUE, ...) {
+  
+  hist(x, ...)
+  if(add.ci == TRUE) {
+    ci <- t.test(x)$conf.int
+    segments(ci[1], 0, ci[2], 0, lwd = 5, col = "red")
+    mtext(paste("95% CI of Mean = [", round(ci[1], 2), ", ",
+                round(ci[2], 2), "]"), side = 3, line = 0)
+  }
+}
+#Now test our function with the optional inputs 'main,' 'xlab,' and 'col'
+#These arguments will be passed down to the hist() function with hist.advanced()
+hist.advanced(x = rnorm(100), add.ci = TRUE,
+              main = "Treasure Chests Found", 
+              xlab = "Number of Chests", col = "lightblue")
+
+####Chapter 16 exercises####
+
+#Captain Jack is convinced that he can predict how much gold he will find on an island
+#with the equation: (a*b)-c*324+log(a), where a is the area of the island in square
+#meters, b is the number of trees on the island, and c is how drunk he is on a scale
+#of 1-10. Create a function called Jacks.Equation that takes a, b, and c as arguments
+#and returns Captain Jack's predictions
+Jacks.Equation <- function(a, b, c) {
+  return(a * b - c * 324 + log(a))
+}
+Jacks.Equation(a = 1000, b = 30, c = 7)
+
+#Write a function called standardize.me that takes a vector x as an argument, and 
+#returns a vector that standardizes the values of x
+standardize.me <- function (x) {
+  
+  result <- (x - mean(x)) / sd(x)
+  
+  return(result)
+}
+standardize.me(c(1, 2, 1, 100))
+
+#Often you will need to recode values of a dataset. For ex, if you have a survey of age
+#data, you may want to convert any crazy values to NA. Write a function called
+#recode.numeric with 3 arguments: x, lb, and ub. We'll assume that x is a numeric
+#vector. The function should look at the values of x, convert any values below lb
+#and above ub to NA, then return the resulting vector
+recode.numeric <- function(x, lb, ub) {
+  
+  x[x < lb] <- NA
+  x[x > ub] <- NA
+  
+  return()
+}
+recode.numeric(x =c(5, 3, -100, 4, 3, 1000),
+               lb = 0, ub = 10)
+
+#Create a function called plot.advanced that creates a scatterplot with the
+#following arguments
+#a) add.regression, a logical value indicating whether or not to add a regression
+# line to the plot
+#b) add.means, a logical value indicating whether or not to add a vertical line at the
+# mean x value and a horizontal line at mean y value
+#c) add.test, a logical value indicating whether or not to add text to the top margin
+# of the plot indicating the result of a correlation test between x and y
+plot.advanced <-function(x, y,
+                         add.regression = T,
+                         add.means = T,
+                         add.test = T,
+                         ...) {
+  plot(x, y, ...)
+  if(add.regression) {
+    abline(lm(y ~ x), lwd = 2)
+  }
+  
+  if(add.means) {
+    abline(v = mean(x), lty = 2)
+    abline(h = mean(y), lty = 2)
+  }
+  
+  if(add.test) {
+    test <-cor.test(x, y)
+    
+    text.to.add <- paste("r = ", round(test$estimate, 2), 
+                         ",t(", round(test$parameter, 2), ") = ",
+                         round(test$statistic, 2), ", p = ", 
+                         round(test$p.value, 2), sep = "")
+    
+    mtext(text = text.to.add, side = 3, line = 5)
+  }
+}
+
+plot.advanced(x = diamonds$weight, y = diamonds$value,
+              add.regression = T,
+              add.means = T,
+              add.test = T)
+
+####Chapter 17: Loops####
+#To tell R to do something over and over again, we use a loop
+#Allow you to write code once but evaluate it without having to repeat yourself
+
+#For ex: say you conduct a survey of 50 people containing 100 yes/no wquestions.
+# Q1 might be "do you ever pick your nose?" and Q2 might be "no, seriously, do you
+# ever pick your nose?!" When you finish the survey, you could store the data as a 
+# df with 50 rows (for each person) and 100 columns (for each question). Because every
+# question should have a yes or no answer, the only values in the df should be "yes" or
+# "no," but you'll probably get invalid responses "maybe"). We'd like to go through
+# all the data, and recode any invalid response as NA. 
+
+#Slow way to convert values
+survey.df$q.1[(survey.data$q1 %in% c("Y", "N")) == FALSE] <- NA
+survey.df$q.2[(survey.data$q2 %in% c("Y", "N")) == FALSE] <- NA
+#So on and so forth
+
+#Fast way to convert
+for(i in 1:100) { #Loop over all 100 columns
+  
+  temp <- survey.df[, i] #Get data for ith column and save in a new temporary object
+  
+  temp[(temp %in% c("Y", "N")) == FALSE] <- NA #Convert invalid values in temp to NA
+  
+  survey.df[,i] <- temp #Assign temp back to survey.df
+}
+
+####Chapter 17.1: What are loops?####
+#General structure of a for loop
+for(loop.object in loop.vector) {
+  
+  LOOP.CODE
+}
+
+#Three key aspects of loops: loop object, loop vector, loop code
+#1: Loop object-object that will change for each iteration of the loop. Usually a letter
+# like i, or an object with subscript like column.i or participant.i. You can use any
+# object name that you want for the index. 
+#2: Loop vector-vectory specifying all values that the loop object will take over the loop
+# You can specify the values any way you'd like, as long as it's a vector. If you're
+# running a loop over numbers, you'll want to use a:b or seq(). If you want to run a loop
+# over a few specific values, you can use c() function to type the values manually.
+# For ex: to run a loop over 3 different pirate ships, you could set the index values as
+# ship.i = c("Jolly Roger", "Black Pearl", "Queen Anne's Revenge").
+#3: Loop code-the code that will be executed for all values in the loop vector. You can 
+# write any code you'd like in the loop-from plotting to analyses. 
+
+#17.7.1: Printing numbers from 1 to 100
+#Let's do a simple loop that prints the integers from 1-10. Loop object is i, loop
+# vector is 1:10, loop code is print(i). Verbally describe loop as:
+# For every integer i between 1 and 10, print integer i
+for(i in 1:10) {
+  
+  print(i)
+  
+}
+
+#17.1.2: Adding the integers from 1 to 100
+#Let's use a loop to add all the integers from 1 to 100. We'll need to creat an object called
+# current.sum that stores the latest sum of the numbers as we go through the loop. We'll set
+# the loop object to i, the loop vector to 1:100, and the loop code to current.sum. We want the
+# starting sum to be 0, we'll set the initial value current.sum to 0
+#Loop to add integers from 1-100
+current.sum  <- 0  #The starting valule of current.sum
+
+for(i in 1:100) {
+  
+  current.sum <- current.sum + i
+  
+}
+current.sum
+#To see if our loop gave us the correct answer, we can do the same calculation without
+# a loop by using a:b and the sum() function
+#Add integers from 1-100 without a loop
+sum(1:100)
+
+####Chapter 17.2: Creating multiple plots with a loop####
+#One of the best uses of a loop is to create multiple graphs quickly and easily.
+#Let's use a loop to create 4 plots representing data from an exam containing 4 questions
+# The data are in a matrix with 100 rows (people) and 4 columns (scores)
+library(yarrr)
+head(examscores)
+#Now we'll loop over the columns and create a histogram of the data in each column
+# First set up a 2x2 plotting space, then define the loop object as i, and the 
+# loop vector as the integers from 1:4. In the loop code, data is stored in column i
+# as the new vector x, then created a histogram
+#Set up a 2x2 plotting space
+par(mfrow = c(2, 2))  
+#Create the loop.vector (all the columns)
+loop.vector <- 1:4
+
+for (i in loop.vector) { #Loop over loop.vector
+  #store data in column.i as x
+  x <- examscores[,i]
+  
+  #Plot the histogram of x
+  hist(x, main = paste("Question", i), xlab = "Scores", xlim = c(0, 100))
+}
+
+####Chapter 17. 3: Updating a container object with a loop####
+#For many loops, you may want to update values of a 'container' object with each iteration
+# of a loop. We can do this using indexing and assignment within a loop.
+#Let's do an example with the examscores dataframe. We'll use a loop to calculate how
+# many students failed each of the 4 exams-where failing is a score less than 50. 
+# We'll start by creating an NA vector called failure.percent. This will be a 
+# container object that we'll update later with the loop
+#Create a container object of 4 NA values
+failure.percent <- rep(NA, 4)
+#Then use a loop that fills this object with the percentage of failures for each exam.
+#Loop will go over each column in examscores, calculates the percentage of scores less
+#than 50 for that column, and assigns the result to the ith value of failure.percent.
+#For the loop, our loop object will be i and our loop vector will be 1:4
+for(i in 1:4) {   #Loop over columns 1 through 4
+  
+  #Get the scores for the ith column
+  x <- examscores[, i]
+  
+  #Calculate the percent of failures
+  failures.i <- mean(x < 50)
+  
+  #Assign result to the ith value of failure.percent
+  failure.percent[i] <- failures.i
+}
+#Look at the result
+failure.percent
+#About 50% failed exam 1, everyone failed exam 2, 3% failed exam 3, and 97% failed exam 4. 
+
+####Chapter 17.4: Loops over multiple indices with a design matrix####
+#Do this by creating multiple nested loops--but, ugly, so can also use design.matrices to
+#reduce loops with multiple index  into a single loop with one index
+#Let's say you want to calculate mean, median, and sd of some quantitative variable for all
+# combinations of two factors. Let's say we wan# on the age of pirates for all 
+# combinations of colleges and sex.
+#Start by creating a design matrix
+design.matrix <- expand.grid("college" = c("JSSFP", "CCCC"), # college factor
+                             "sex" = c("male", "female"), # sex factor
+                             "median.age" = NA, # NA columns for our future calculations
+                             "mean.age" = NA, #...
+                             "sd.age" = NA, #...
+                             stringsAsFactors = FALSE)
+design.matrix
+#Design matrix has all combinations of our factors in addition to three NA columns for
+# future stats. Now we can creat the loop.
+for(row.i in 1:nrow(design.matrix)) {
+  
+  # Get factor values for current row
+  college.i <- design.matrix$college[row.i]
+  sex.i <- design.matrix$sex[row.i]
+  
+  # Subset pirates with current factor values
+  data.temp <- subset(pirates, 
+                      college == college.i & sex == sex.i)
+  
+  # Calculate statistics
+  median.i <- median(data.temp$age)
+  mean.i <- mean(data.temp$age)
+  sd.i <- sd(data.temp$age)
+  
+  # Assign statistics to row.i of design.matrix
+  design.matrix$median.age[row.i] <- median.i
+  design.matrix$mean.age[row.i] <- mean.i
+  design.matrix$sd.age[row.i] <- sd.i
+  
+}
+
+#See if it worked
+design.matrix
